@@ -44,11 +44,11 @@ Después compartí el link + la clave del equipo.
 
 ## Cómo funciona la asignación
 
-1. Cada persona carga uno o más rangos (desde/hasta) o se marca como **"no tengo fechas definidas"**.
-2. Los pedidos se ordenan por los criterios de desempate configurados.
-3. Se aprueban de a uno: un rango se aprueba si no se pisa con otro ya aprobado dentro de su grupo (turno, turno + área o todo el equipo, según la regla).
-4. Coordinación puede forzar cualquier fila (aprobar/rechazar), cargar pedidos a nombre de alguien o importar las respuestas de un Google Form pegándolas.
-5. Nada llega al equipo hasta que se aprieta **Publicar asignación**.
+1. Cada persona carga hasta **tres opciones** de fechas en orden de preferencia (cualquier fecha, sin límites), o se marca como **"no tengo fechas definidas"**. Las opciones son alternativas: se aprueba una sola por persona.
+2. Las personas se ordenan por los criterios de desempate configurados (antigüedad → métricas → orden de llegada).
+3. En ese orden, cada persona recibe la primera de sus opciones que no se pisa con lo ya aprobado dentro de su grupo (turno, turno + área o todo el equipo, según la regla). Si ninguna entra, queda sin asignar.
+4. Coordinación puede forzar cualquier opción (aprobar/rechazar), cargar pedidos a nombre de alguien o importar las respuestas de un Google Form pegándolas.
+5. Nada llega al equipo hasta que se aprieta **Publicar asignación**. El equipo no ve reglas ni criterios, solo sus opciones y el resultado.
 
 ## Actualizar el script
 
@@ -60,7 +60,7 @@ Cada vez que cambies `Code.gs` en Apps Script: **Implementar → Administrar imp
 |---|---|
 | `Config` | título, período, regla, criterios, abierto/cerrado, fecha de última publicación |
 | `Equipo` | id, nombre, turno (`am`/`pm`), área, activo, fecha de ingreso, métrica |
-| `Pedidos` | un rango por fila (o una fila "sin fechas" con `sin_fechas = TRUE`) |
+| `Pedidos` | una fila por opción (columna `opcion` = 1, 2, 3), o una fila "sin fechas" con `sin_fechas = TRUE` |
 | `Forzados` | aprobaciones/rechazos manuales |
 | `Resultados` | la última asignación publicada |
 

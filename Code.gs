@@ -4,7 +4,7 @@
  * Guarda todo en las pestañas de este Google Sheet:
  *   Config     → clave/valor (título, período, regla, criterios, abierto)
  *   Equipo     → una fila por persona (id, nombre, turno, área, activo, fecha_ingreso, metrica)
- *   Pedidos    → una fila por rango pedido (o por "sin fechas definidas")
+ *   Pedidos    → una fila por opción pedida (opción 1, 2, 3) o una fila "sin fechas definidas"
  *   Forzados   → aprobaciones/rechazos manuales de coordinación
  *   Resultados → la última asignación publicada, tal como la ve el equipo
  *
@@ -22,9 +22,9 @@ const SH = { config: 'Config', team: 'Equipo', requests: 'Pedidos', overrides: '
 const HEAD = {
   config:    ['clave', 'valor'],
   team:      ['id', 'nombre', 'turno', 'area', 'activo', 'fecha_ingreso', 'metrica'],
-  requests:  ['id', 'persona_id', 'desde', 'hasta', 'comentario', 'creado', 'origen', 'sin_fechas'],
+  requests:  ['id', 'persona_id', 'opcion', 'desde', 'hasta', 'comentario', 'creado', 'origen', 'sin_fechas'],
   overrides: ['clave_pedido', 'estado', 'actualizado'],
-  results:   ['publicado', 'persona_id', 'desde', 'hasta', 'estado', 'motivo']
+  results:   ['publicado', 'persona_id', 'opcion', 'desde', 'hasta', 'estado', 'motivo']
 };
 
 function doGet(e)  { return respond(handle((e && e.parameter) || {})); }
@@ -44,7 +44,7 @@ function handle(p) {
     const isAdmin = p.code === ADMIN_CODE;
     const isTeam = isAdmin || p.code === TEAM_CODE;
     if (!isTeam) return { ok: false, error: 'bad_code' };
-    const adminOnly = ['saveConfig', 'saveTeam', 'override', 'publish', 'setOpen', 'import', 'adminRemove'];
+    const adminOnly = ['saveConfig', 'saveTeam', 'override', 'publish', 'setOpen', 'import', 'removePerson'];
     if (adminOnly.indexOf(action) >= 0 && !isAdmin) return { ok: false, error: 'admin_only' };
 
     const lock = LockService.getScriptLock();
@@ -53,10 +53,9 @@ function handle(p) {
       ensureSheets();
       switch (action) {
         case 'state':       break;
-        case 'addRange':    addRange(p); break;
-        case 'setFlexible': setFlexible(p); break;
-        case 'removeRange': removeRange(p, isAdmin); break;
-        case 'adminRemove': removeRange(p, true); break;
+        case 'setRequest':  setRequest(p, isAdmin); break;
+        case 'clearRequest': clearRequest(p, isAdmin); break;
+        case 'removePerson': clearRequest(p, true); break;
         case 'saveConfig':  saveConfig(p.config || {}); break;
         case 'saveTeam':    saveTeam(p.team || []); break;
         case 'override':    setOverride(p.key, p.status); break;
@@ -87,6 +86,9 @@ function ensureSheets() {
     if (s.getLastRow() === 0) {
       s.getRange(1, 1, 1, HEAD[k].length).setValues([HEAD[k]]).setFontWeight('bold');
       s.setFrozenRows(1);
+    } else {
+      const cur = s.getRange(1, 1, 1, HEAD[k].length).getValues()[0].map(String);
+      if (cur.join('|') !== HEAD[k].join('|')) s.getRange(1, 1, 1, HEAD[k].length).setValues([HEAD[k]]).setFontWeight('bold');
     }
     // todo como texto plano para que Sheets no convierta fechas ni números
     s.getRange(1, 1, Math.max(s.getMaxRows(), 2), Math.max(s.getMaxColumns(), HEAD[k].length)).setNumberFormat('@');
@@ -152,55 +154,50 @@ function saveTeam(team) {
 }
 
 // ---------- pedidos ----------
+// Cada persona tiene UN pedido: hasta 3 opciones de fechas en orden de preferencia
+// (una fila por opción), o una sola fila "sin fechas definidas".
 function readRequests() {
   return rows('requests').filter(r => r[0] && r[1]).map(r => ({
-    id: r[0], personId: r[1], from: r[2], to: r[3], note: r[4], createdAt: r[5], source: r[6] || 'self', flexible: bool(r[7])
+    id: r[0], personId: r[1], option: Number(r[2]) || 0, from: r[3], to: r[4], note: r[5], createdAt: r[6], source: r[7] || 'self', flexible: bool(r[8])
   }));
 }
+function reqRow(r) { return [r.id, r.personId, String(r.option || 0), r.from || '', r.to || '', r.note || '', r.createdAt || '', r.source || 'self', r.flexible ? 'TRUE' : 'FALSE']; }
 function validDate(s) { return /^\d{4}-\d{2}-\d{2}$/.test(String(s || '')); }
 function newId() { return Utilities.getUuid().slice(0, 8); }
-function addRange(p) {
-  const cfg = readConfig();
-  if (cfg.open === false && p.code !== ADMIN_CODE) throw new Error('La postulación está cerrada.');
-  if (!p.personId) throw new Error('Falta la persona.');
-  if (!validDate(p.from) || !validDate(p.to) || p.to < p.from) throw new Error('Fechas inválidas.');
-  if (cfg.periodStart && p.from < cfg.periodStart) throw new Error('El rango empieza antes del período.');
-  if (cfg.periodEnd && p.to > cfg.periodEnd) throw new Error('El rango termina después del período.');
-  // si la persona estaba como "sin fechas definidas", ese registro se reemplaza
-  const all = readRequests().filter(r => !(r.personId === p.personId && r.flexible));
-  if (all.some(r => r.personId === p.personId && r.from <= p.to && p.from <= r.to)) throw new Error('Ese rango se pisa con otro tuyo ya cargado.');
-  writeRows('requests', all.map(reqRow));
-  appendRow('requests', reqRow({ id: newId(), personId: p.personId, from: p.from, to: p.to, note: String(p.note || '').slice(0, 300), createdAt: now(), source: p.source || 'self', flexible: false }));
-}
-function setFlexible(p) {
-  const cfg = readConfig();
-  if (cfg.open === false && p.code !== ADMIN_CODE) throw new Error('La postulación está cerrada.');
-  if (!p.personId) throw new Error('Falta la persona.');
-  const all = readRequests();
-  if (all.some(r => r.personId === p.personId && !r.flexible)) throw new Error('Ya tenés fechas cargadas; quitalas primero si querés marcarte sin fechas.');
-  const rest = all.filter(r => !(r.personId === p.personId && r.flexible));
-  writeRows('requests', rest.map(reqRow));
-  appendRow('requests', reqRow({ id: newId(), personId: p.personId, from: '', to: '', note: String(p.note || '').slice(0, 300), createdAt: now(), source: p.source || 'self', flexible: true }));
-}
-function removeRange(p, isAdmin) {
+function setRequest(p, isAdmin) {
   const cfg = readConfig();
   if (cfg.open === false && !isAdmin) throw new Error('La postulación está cerrada.');
+  if (!p.personId) throw new Error('Falta la persona.');
+  const note = String(p.note || '').slice(0, 300);
   const all = readRequests();
-  const hit = all.find(r => r.id === p.id);
-  if (!hit) return;
-  if (!isAdmin && p.personId && hit.personId !== p.personId) throw new Error('Solo podés quitar tus propios rangos.');
-  writeRows('requests', all.filter(r => r.id !== p.id).map(reqRow));
+  const mine = all.filter(r => r.personId === p.personId);
+  // el orden de llegada se conserva: si ya había pedido, se mantiene su fecha original
+  const createdAt = mine.length ? mine.map(r => r.createdAt).filter(Boolean).sort()[0] || now() : now();
+  const source = p.source || (mine[0] && mine[0].source) || 'self';
+  const rest = all.filter(r => r.personId !== p.personId);
+  const fresh = [];
+  if (p.flexible) {
+    fresh.push({ id: newId(), personId: p.personId, option: 0, from: '', to: '', note, createdAt, source, flexible: true });
+  } else {
+    const opts = (p.options || []).filter(o => o && (o.from || o.to)).slice(0, 3);
+    if (!opts.length) throw new Error('Cargá al menos una opción de fechas.');
+    opts.forEach((o, i) => {
+      if (!validDate(o.from) || !validDate(o.to)) throw new Error('La opción ' + (i + 1) + ' tiene una fecha incompleta.');
+      if (o.to < o.from) throw new Error('En la opción ' + (i + 1) + ' la fecha "hasta" es anterior a "desde".');
+      fresh.push({ id: newId(), personId: p.personId, option: i + 1, from: o.from, to: o.to, note: i === 0 ? note : '', createdAt, source, flexible: false });
+    });
+  }
+  writeRows('requests', rest.concat(fresh).map(reqRow));
 }
-function reqRow(r) { return [r.id, r.personId, r.from || '', r.to || '', r.note || '', r.createdAt || '', r.source || 'self', r.flexible ? 'TRUE' : 'FALSE']; }
+function clearRequest(p, isAdmin) {
+  const cfg = readConfig();
+  if (cfg.open === false && !isAdmin) throw new Error('La postulación está cerrada.');
+  if (!p.personId) throw new Error('Falta la persona.');
+  writeRows('requests', readRequests().filter(r => r.personId !== p.personId).map(reqRow));
+}
 function importRows(list) {
-  const all = readRequests();
-  let i = 0;
-  list.forEach(r => {
-    if (!r.personId || !validDate(r.from) || !validDate(r.to) || r.to < r.from) return;
-    if (all.some(x => x.personId === r.personId && x.from === r.from && x.to === r.to)) return;
-    all.push({ id: newId(), personId: r.personId, from: r.from, to: r.to, note: r.note || '', createdAt: r.createdAt || new Date(Date.now() + (i++)).toISOString(), source: 'import', flexible: false });
-  });
-  writeRows('requests', all.filter(r => !(r.flexible && all.some(x => x.personId === r.personId && !x.flexible))).map(reqRow));
+  // list: [{personId, options:[{from,to}], note}] — reemplaza el pedido de cada persona
+  list.forEach(r => { try { setRequest({ personId: r.personId, options: r.options || [], note: r.note || '', source: 'import' }, true); } catch (_) {} });
 }
 
 // ---------- forzados y resultados ----------
@@ -218,12 +215,12 @@ function setOverride(key, status) {
 }
 function publish(items) {
   const ts = now();
-  writeRows('results', items.map(it => [ts, it.personId, it.from, it.to, it.status, it.reason || '']));
+  writeRows('results', items.map(it => [ts, it.personId, String(it.option || 0), it.from, it.to, it.status, it.reason || '']));
   setConfigKey('publishedAt', ts);
 }
 function readResults() {
   const cfg = readConfig();
-  const list = rows('results').filter(r => r[1]).map(r => ({ personId: r[1], from: r[2], to: r[3], status: r[4], reason: r[5] }));
+  const list = rows('results').filter(r => r[1]).map(r => ({ personId: r[1], option: Number(r[2]) || 0, from: r[3], to: r[4], status: r[5], reason: r[6] }));
   if (!cfg.publishedAt) return null;
   return { publishedAt: cfg.publishedAt, items: list };
 }

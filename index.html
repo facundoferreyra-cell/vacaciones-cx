@@ -178,6 +178,14 @@ details summary{cursor:pointer;font-weight:500;color:var(--ink-2)}
 kbd{font-family:ui-monospace,monospace;font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
 @media (prefers-reduced-motion:no-preference){.btn,.tabs button{transition:border-color .12s,background .12s}}
 @media (max-width:600px){.req{grid-template-columns:1fr;gap:6px} .tl{--label:130px}}
+.opt-label{grid-column:1/-1;font-weight:600;font-size:13px;color:var(--ink-2);margin-bottom:-6px}
+.opt-row{padding:10px 12px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface)}
+.tl-rows{display:flex;flex-direction:column}
+.tl-rows .tl-cells.sub{min-height:26px}
+.tl-rows .tl-cells.sub .bar{height:18px;line-height:18px;font-size:10.5px}
+.tl-rows .tl-cells:not(:last-child){border-bottom:1px dashed var(--line-2)}
+tr.first td{border-top:1px solid var(--line)}
+tbody tr:first-child td{border-top:0}
 </style>
 </head>
 <body>
@@ -186,7 +194,7 @@ kbd{font-family:ui-monospace,monospace;font-size:12px;background:var(--surface-2
     <div>
       <div class="eyebrow">Equipo CX · Coderhouse</div>
       <h1 id="title">Vacaciones</h1>
-      <p class="muted small" id="subtitle">Postulación de fechas y asignación por prioridad</p>
+      <p class="muted small" id="subtitle">Postulación de fechas</p>
     </div>
     <div class="status-line">
       <span><span class="dot" id="dot"></span> <span id="conn">Conectando…</span></span>
@@ -224,26 +232,29 @@ kbd{font-family:ui-monospace,monospace;font-size:12px;background:var(--surface-2
     <div class="stack">
       <div class="card" id="pedido-card">
         <h2>Postulá tus fechas</h2>
-        <p class="lead" id="pedido-lead">Elegí quién sos y cargá el rango que querés tomarte. Podés cargar más de un rango si vas a dividir las vacaciones.</p>
+        <p class="lead">Elegí tu nombre y cargá hasta tres opciones, en orden de preferencia. Podés volver a entrar y cambiarlas mientras la postulación esté abierta.</p>
         <div id="pedido-blocked" class="notice warn" hidden></div>
-        <div class="form-grid" id="pedido-form">
-          <label class="f" style="grid-column:1/-1"><span>¿Quién sos?</span><select id="who"></select></label>
-          <label class="f" style="grid-column:1/-1;flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="flex" style="width:auto"> <span>Todavía no tengo fechas definidas</span></label>
-          <label class="f" id="l-from"><span>Desde</span><input type="date" id="from"></label>
-          <label class="f" id="l-to"><span>Hasta <em class="hint" id="days-hint"></em></span><input type="date" id="to"></label>
-          <label class="f" style="grid-column:1/-1"><span id="note-label">Comentario (opcional)</span><input type="text" id="note" placeholder="Ej: viaje ya reservado, casamiento, etc."></label>
-          <div><button class="btn primary" id="add-range">Agregar rango</button></div>
+        <div class="stack" id="pedido-form">
+          <label class="f"><span>¿Quién sos?</span><select id="who"></select></label>
+          <label class="f" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="flex" style="width:auto"> <span>Todavía no tengo fechas definidas</span></label>
+          <div id="opts" class="stack">
+            <div class="form-grid opt-row" data-opt="1"><span class="opt-label">Opción 1 <em class="hint">(la preferida)</em></span><label class="f"><span>Desde</span><input type="date" class="o-from"></label><label class="f"><span>Hasta <em class="hint o-days"></em></span><input type="date" class="o-to"></label></div>
+            <div class="form-grid opt-row" data-opt="2"><span class="opt-label">Opción 2 <em class="hint">(opcional)</em></span><label class="f"><span>Desde</span><input type="date" class="o-from"></label><label class="f"><span>Hasta <em class="hint o-days"></em></span><input type="date" class="o-to"></label></div>
+            <div class="form-grid opt-row" data-opt="3"><span class="opt-label">Opción 3 <em class="hint">(opcional)</em></span><label class="f"><span>Desde</span><input type="date" class="o-from"></label><label class="f"><span>Hasta <em class="hint o-days"></em></span><input type="date" class="o-to"></label></div>
+          </div>
+          <label class="f"><span id="note-label">Comentario (opcional)</span><input type="text" id="note" placeholder="Ej: viaje ya reservado, casamiento, etc."></label>
+          <div class="row"><button class="btn primary" id="save-req">Guardar mi pedido</button><button class="btn ghost danger" id="clear-req" hidden>Quitar mi pedido</button></div>
         </div>
       </div>
-      <div class="card">
-        <h2 id="my-title">Tus rangos</h2>
-        <p class="lead small" id="my-lead">Todavía no cargaste ninguno.</p>
+      <div class="card" id="my-card" hidden>
+        <h2 id="my-title">Tu pedido</h2>
+        <p class="lead small" id="my-lead"></p>
         <div class="stack" id="my-list"></div>
       </div>
     </div>
     <div class="stack">
       <div class="card">
-        <h3>Cómo se asignan</h3>
+        <h3>Cómo sigue</h3>
         <div id="rules-text" class="small" style="margin-top:8px;color:var(--ink-2)"></div>
       </div>
       <div class="card" id="result-card" hidden>
@@ -266,9 +277,9 @@ kbd{font-family:ui-monospace,monospace;font-size:12px;background:var(--surface-2
     </div>
     <div class="tl" id="timeline"></div>
     <div class="legend">
-      <span><i class="pend"></i> Pedido sin resolver</span>
-      <span><i class="approved"></i> Aprobado</span>
-      <span><i class="rejected"></i> No aprobado</span>
+      <span><i class="pend"></i> Opción pedida</span>
+      <span><i class="approved"></i> Aprobada</span>
+      <span><i class="rejected"></i> No aprobada</span>
       <span><i class="we"></i> Fin de semana</span>
     </div>
     <div id="cal-flex" class="small muted" style="margin-top:10px"></div>
@@ -280,7 +291,7 @@ kbd{font-family:ui-monospace,monospace;font-size:12px;background:var(--surface-2
     <div class="row between" style="margin-bottom:12px">
       <div>
         <h2>Asignación por prioridad</h2>
-        <p class="muted small">Orden sugerido según los criterios. Podés forzar cualquier fila y después publicar para que el equipo lo vea.</p>
+        <p class="muted small">Cada persona recibe la primera de sus opciones que no se pisa con lo ya aprobado, en orden de prioridad. Podés forzar cualquier fila y después publicar.</p>
       </div>
       <div class="row">
         <button class="btn" id="btn-toggle-open"></button>
@@ -294,19 +305,20 @@ kbd{font-family:ui-monospace,monospace;font-size:12px;background:var(--surface-2
     <div class="grid two" style="margin-top:20px">
       <div class="card">
         <h2>Cargar pedido a nombre de alguien</h2>
-        <p class="lead small">Para quienes mandaron las fechas por otro lado.</p>
-        <div class="form-grid">
+        <p class="lead small">Reemplaza el pedido que esa persona tenga cargado.</p>
+        <div class="stack">
           <label class="f"><span>Persona</span><select id="m-who"></select></label>
-          <label class="f"><span>Desde</span><input type="date" id="m-from"></label>
-          <label class="f"><span>Hasta</span><input type="date" id="m-to"></label>
-          <label class="f" style="grid-column:1/-1"><span>Comentario</span><input type="text" id="m-note"></label>
-          <div class="row"><button class="btn" id="m-add">Agregar</button><button class="btn ghost" id="m-flex">Marcar sin fechas definidas</button></div>
+          <div class="form-grid"><span class="opt-label">Opción 1</span><label class="f"><span>Desde</span><input type="date" id="m-from1"></label><label class="f"><span>Hasta</span><input type="date" id="m-to1"></label></div>
+          <div class="form-grid"><span class="opt-label">Opción 2</span><label class="f"><span>Desde</span><input type="date" id="m-from2"></label><label class="f"><span>Hasta</span><input type="date" id="m-to2"></label></div>
+          <div class="form-grid"><span class="opt-label">Opción 3</span><label class="f"><span>Desde</span><input type="date" id="m-from3"></label><label class="f"><span>Hasta</span><input type="date" id="m-to3"></label></div>
+          <label class="f"><span>Comentario</span><input type="text" id="m-note"></label>
+          <div class="row"><button class="btn" id="m-add">Guardar</button><button class="btn ghost" id="m-flex">Marcar sin fechas definidas</button></div>
         </div>
       </div>
       <div class="card">
         <h2>Importar respuestas del Form</h2>
-        <p class="lead small">Pegá las filas desde el Sheet de respuestas (una por línea): nombre, desde, hasta. Acepta <kbd>dd/mm/aaaa</kbd> o <kbd>aaaa-mm-dd</kbd>, separado por tab, coma o punto y coma.</p>
-        <textarea id="imp-text" placeholder="Ana Quintero	05/01/2027	16/01/2027
+        <p class="lead small">Pegá las filas desde el Sheet de respuestas (una por línea): nombre y después las fechas en pares desde/hasta (opción 1, 2, 3). Acepta <kbd>dd/mm/aaaa</kbd> o <kbd>aaaa-mm-dd</kbd>, separado por tab, coma o punto y coma. Reemplaza el pedido de cada persona.</p>
+        <textarea id="imp-text" placeholder="Ana Quintero	05/01/2027	16/01/2027	01/02/2027	12/02/2027
 Nico	20/02/2027	05/03/2027"></textarea>
         <div class="row" style="margin-top:10px"><button class="btn" id="imp-preview">Previsualizar</button><button class="btn primary" id="imp-commit" hidden>Importar <span id="imp-n"></span></button></div>
         <div id="imp-out" class="stack small" style="margin-top:10px"></div>
@@ -319,11 +331,11 @@ Nico	20/02/2027	05/03/2027"></textarea>
     <div class="grid two">
       <div class="card">
         <h2>Período y reglas</h2>
-        <p class="lead small">Esto es lo que ve el equipo cuando postula.</p>
+        <p class="lead small">El período solo define qué muestra el calendario; el equipo puede pedir cualquier fecha.</p>
         <div class="form-grid">
           <label class="f" style="grid-column:1/-1"><span>Nombre de la ronda</span><input type="text" id="cf-title" placeholder="Vacaciones verano 2027"></label>
-          <label class="f"><span>Desde</span><input type="date" id="cf-start"></label>
-          <label class="f"><span>Hasta</span><input type="date" id="cf-end"></label>
+          <label class="f"><span>Calendario desde</span><input type="date" id="cf-start"></label>
+          <label class="f"><span>Calendario hasta</span><input type="date" id="cf-end"></label>
           <label class="f" style="grid-column:1/-1"><span>Regla de solapamiento</span>
             <select id="cf-rule">
               <option value="shift">Por turno: dos personas del mismo turno no se pisan</option>
@@ -331,22 +343,22 @@ Nico	20/02/2027	05/03/2027"></textarea>
               <option value="none">Nadie se pisa, en todo el equipo</option>
             </select></label>
           <label class="f"><span>Máx. personas a la vez por grupo</span><input type="number" id="cf-max" min="1" max="10" value="1"></label>
-          <label class="f"><span>Máx. días por persona (0 = sin tope)</span><input type="number" id="cf-maxdays" min="0" max="60" value="0"></label>
+          <label class="f"><span>Máx. días por opción (0 = sin tope)</span><input type="number" id="cf-maxdays" min="0" max="90" value="0"></label>
           <div style="grid-column:1/-1">
             <span class="hint" style="display:block;margin-bottom:6px">Orden de desempate</span>
             <div class="row">
               <select id="cf-c1"></select><span class="muted">→</span><select id="cf-c2"></select><span class="muted">→</span><select id="cf-c3"></select>
             </div>
           </div>
-          <label class="f" style="grid-column:1/-1"><span>Nota para el equipo (opcional)</span><input type="text" id="cf-note" placeholder="Ej: mínimo 7 días corridos, avisar antes del 15/11"></label>
+          <label class="f" style="grid-column:1/-1"><span>Nota para el equipo (opcional)</span><input type="text" id="cf-note" placeholder="Ej: cerramos la postulación el 15/11"></label>
         </div>
       </div>
       <div class="card">
         <h2>Cómo funciona</h2>
         <div class="small stack" style="color:var(--ink-2)">
-          <p>Cada persona carga uno o más rangos, o se marca como <b>sin fechas definidas</b>. Los pedidos se ordenan según los criterios de desempate y se aprueban de a uno: un rango se aprueba si no se pisa con otro ya aprobado dentro de su grupo (según la regla). Si se pisa, queda como <b>no aprobado</b> con el motivo, y la persona puede cargar otro rango.</p>
-          <p>Antigüedad y métricas solo las ve coordinación: el equipo ve sus rangos, el calendario y, una vez que publicás, el resultado.</p>
-          <p>Los forzados manuales (aprobar o rechazar una fila) se respetan por encima del orden automático y quedan marcados con borde punteado.</p>
+          <p>Cada persona carga hasta tres opciones de fechas en orden de preferencia, o se marca como <b>sin fechas definidas</b>. Las opciones son alternativas: se aprueba una sola por persona.</p>
+          <p>Las personas se ordenan según los criterios de desempate. En ese orden, cada una recibe la primera de sus opciones que no se pisa con lo ya aprobado dentro de su grupo (según la regla). Si ninguna entra, queda sin asignar y podés forzar o pedirle otras fechas.</p>
+          <p>Antigüedad, métricas y este orden solo los ve coordinación. El equipo ve sus opciones, el calendario y, cuando publicás, el resultado.</p>
           <p>Todo se guarda en el Google Sheet conectado; podés abrirlo para ver o corregir los datos a mano.</p>
         </div>
       </div>
@@ -378,11 +390,6 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const SHIFT = {am:'Mañana', pm:'Tarde'};
 const CRIT = {antiguedad:'Antigüedad', metricas:'Métricas', llegada:'Orden de llegada'};
 const CRIT_KEYS=['antiguedad','metricas','llegada'];
-const RULE_TXT = {
-  shift:'dos personas del <b>mismo turno</b> no pueden estar de vacaciones a la vez',
-  'shift-area':'dos personas del <b>mismo turno y área</b> no pueden estar de vacaciones a la vez',
-  none:'<b>nadie</b> del equipo puede pisarse con otra persona'
-};
 const store = { get:k=>{ try{ return localStorage.getItem(k); }catch(_){ return null; } }, set:(k,v)=>{ try{ v===null?localStorage.removeItem(k):localStorage.setItem(k,v); }catch(_){} } };
 
 // ---------- dates ----------
@@ -404,7 +411,7 @@ const norm = n => String(n).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(
 const S = {
   code: store.get('vacx-code')||'', isAdmin:false, ready:false,
   config:null, team:[], requests:[], overrides:{}, results:null,
-  tab:'pedido', myPerson: store.get('vacx-who')||null, cfgDirty:false, cfgRendered:'', importPlan:null, saving:false, pollT:null
+  tab:'pedido', myPerson: store.get('vacx-who')||null, formFor:null, cfgDirty:false, cfgRendered:'', importPlan:null, saving:false, pollT:null
 };
 let toastT;
 const toast = m => { let t=$('.toast'); if(!t){ t=document.createElement('div'); t.className='toast'; document.body.appendChild(t);} t.textContent=m; clearTimeout(toastT); toastT=setTimeout(()=>t.remove(),3600); };
@@ -437,14 +444,15 @@ function schedulePoll(){ clearTimeout(S.pollT); S.pollT=setTimeout(()=>{ if(docu
 
 // ---------- resolution ----------
 function collectItems(){
-  return S.requests.filter(r=>r && r.personId && !r.flexible && r.from && r.to && r.to>=r.from).map(r=>({key:r.id, id:r.id, personId:r.personId, from:r.from, to:r.to, note:r.note||'', createdAt:r.createdAt||'', source:r.source||'self', days:daysBetween(r.from,r.to)}));
+  return S.requests.filter(r=>r && r.personId && !r.flexible && r.from && r.to && r.to>=r.from).map(r=>({key:r.id, id:r.id, personId:r.personId, option:Number(r.option)||1, from:r.from, to:r.to, note:r.note||'', createdAt:r.createdAt||'', source:r.source||'self', days:daysBetween(r.from,r.to)}));
 }
 const flexibles = () => S.requests.filter(r=>r && r.flexible);
 const groupKey = (p,rule) => rule==='none' ? 'todos' : rule==='shift-area' ? p.shift+'|'+(p.area||'') : p.shift;
-function critCmp(c, a, b, scores){
-  if(c==='antiguedad'){ const sa=(scores[a.personId]||{}).seniorityDate||'9999-12-31', sb=(scores[b.personId]||{}).seniorityDate||'9999-12-31'; return sa<sb?-1:sa>sb?1:0; }
-  if(c==='metricas'){ const ma=Number((scores[a.personId]||{}).metric), mb=Number((scores[b.personId]||{}).metric); const xa=(isNaN(ma)||(scores[a.personId]||{}).metric==='')?-Infinity:ma, xb=(isNaN(mb)||(scores[b.personId]||{}).metric==='')?-Infinity:mb; return xa>xb?-1:xa<xb?1:0; }
-  const ta=a.createdAt||'9999', tb=b.createdAt||'9999'; return ta<tb?-1:ta>tb?1:0;
+function personArrival(pid){ return S.requests.filter(r=>r.personId===pid && r.createdAt).map(r=>r.createdAt).sort()[0] || '9999'; }
+function critCmp(c, a, b, scores){ // a, b: personIds
+  if(c==='antiguedad'){ const sa=(scores[a]||{}).seniorityDate||'9999-12-31', sb=(scores[b]||{}).seniorityDate||'9999-12-31'; return sa<sb?-1:sa>sb?1:0; }
+  if(c==='metricas'){ const va=(scores[a]||{}).metric, vb=(scores[b]||{}).metric; const xa=(va===''||va===undefined||va===null||isNaN(Number(va)))?-Infinity:Number(va), xb=(vb===''||vb===undefined||vb===null||isNaN(Number(vb)))?-Infinity:Number(vb); return xa>xb?-1:xa<xb?1:0; }
+  const ta=personArrival(a), tb=personArrival(b); return ta<tb?-1:ta>tb?1:0;
 }
 function whyBefore(a, b, criteria, scores){
   for(const c of criteria){ const r=critCmp(c,a,b,scores); if(r<0) return c==='antiguedad'?'tiene más antigüedad':c==='metricas'?'tiene mejor métrica':'postuló antes'; if(r>0) return 'fue definido por coordinación'; }
@@ -455,20 +463,31 @@ function resolve(){
   const cfg=S.config||{}; const team=teamById(); const scores=scoresOf(); const ov=S.overrides||{};
   const criteria=(cfg.criteria&&cfg.criteria.length===3)?cfg.criteria:CRIT_KEYS;
   const items=collectItems().filter(it=>team[it.personId]);
-  items.sort((a,b)=>{ for(const c of criteria){ const r=critCmp(c,a,b,scores); if(r) return r; } return a.key<b.key?-1:1; });
-  const approved=[]; const rule=cfg.rule||'shift'; const max=Math.max(1,Number(cfg.maxSimul)||1); const maxDays=Number(cfg.maxDays)||0; const usedDays={};
-  items.forEach((it,i)=>{
-    const p=team[it.personId]; it.rank=i+1; it.group=groupKey(p,rule); it.person=p;
-    const clashes=approved.filter(o=>o.personId!==it.personId && o.group===it.group && overlap(o,it));
-    const blocked = max<=1 ? clashes.length>0 : anyDayOver(it,clashes,max);
-    const selfClash = approved.some(o=>o.personId===it.personId && overlap(o,it));
-    const overDays = maxDays>0 && ((usedDays[it.personId]||0)+it.days) > maxDays;
-    it.clashes=clashes; it.auto=(blocked||selfClash||overDays)?'rejected':'approved';
-    it.autoReason = selfClash ? 'Se superpone con otro rango tuyo ya aprobado' : overDays ? `Supera el tope de ${maxDays} días por persona` : blocked ? 'Se pisa con '+clashes.map(c=>`${c.person.name} (${fmt(c.from)}–${fmt(c.to)}), que ${whyBefore(c,it,criteria,scores)}`).join('; ') : '';
-    const o=ov[it.key]; it.overridden = o==='approved'||o==='rejected'; it.status = it.overridden ? o : it.auto;
-    if(it.status==='approved'){ approved.push(it); usedDays[it.personId]=(usedDays[it.personId]||0)+it.days; }
+  const persons=Array.from(new Set(items.map(i=>i.personId)));
+  persons.sort((a,b)=>{ for(const c of criteria){ const r=critCmp(c,a,b,scores); if(r) return r; } return a<b?-1:1; });
+  const rule=cfg.rule||'shift'; const max=Math.max(1,Number(cfg.maxSimul)||1); const maxDays=Number(cfg.maxDays)||0;
+  const approved=[]; const byPerson={};
+  const clashText=(it,clashes)=>'Se pisa con '+clashes.map(c=>`${c.person.name} (${fmt(c.from)}–${fmt(c.to)}), que ${whyBefore(c.personId,it.personId,criteria,scores)}`).join('; ');
+  persons.forEach((pid,idx)=>{
+    const p=team[pid]; const opts=items.filter(i=>i.personId===pid).sort((a,b)=>a.option-b.option);
+    opts.forEach(o=>{ o.rank=idx+1; o.person=p; o.group=groupKey(p,rule); o.status=null; o.reason=''; o.overridden=false; });
+    let chosen=opts.find(o=>ov[o.key]==='approved');
+    if(chosen){ chosen.overridden=true; const clashes=approved.filter(o=>o.group===chosen.group && overlap(o,chosen)); if(clashes.length) chosen.reason='Forzado por coordinación. '+clashText(chosen,clashes); else chosen.reason='Forzado por coordinación.'; }
+    else {
+      for(const o of opts){
+        if(ov[o.key]==='rejected'){ o.status='rejected'; o.overridden=true; o.reason='Rechazado por coordinación.'; continue; }
+        if(maxDays>0 && o.days>maxDays){ o.status='rejected'; o.reason=`Supera el tope de ${maxDays} días.`; continue; }
+        const clashes=approved.filter(x=>x.group===o.group && overlap(x,o));
+        const blocked = max<=1 ? clashes.length>0 : anyDayOver(o,clashes,max);
+        if(blocked){ o.status='rejected'; o.reason=clashText(o,clashes); continue; }
+        chosen=o; break;
+      }
+    }
+    if(chosen){ chosen.status='approved'; approved.push(chosen); opts.forEach(o=>{ if(o!==chosen && !o.status){ o.status='rejected'; o.reason=`Se aprobó la opción ${chosen.option}.`; } }); }
+    byPerson[pid]={rank:idx+1, chosen, opts};
   });
-  return items;
+  items.sort((a,b)=> a.rank!==b.rank ? a.rank-b.rank : a.option-b.option);
+  return {items, byPerson, persons};
 }
 function publishedStatus(it){ const r=S.results; if(!r||!Array.isArray(r.items)) return null; return r.items.find(x=>x.personId===it.personId && x.from===it.from && x.to===it.to) || null; }
 
@@ -482,80 +501,74 @@ function renderAll(){
 function renderHeader(){
   const cfg=S.config||{};
   $('#title').textContent = cfg.title || 'Vacaciones';
-  $('#subtitle').textContent = cfg.periodStart && cfg.periodEnd ? `Período ${fmtL(cfg.periodStart)} – ${fmtL(cfg.periodEnd)} · ${isOpen()?'Postulación abierta':'Postulación cerrada'}` : 'Postulación de fechas y asignación por prioridad';
+  $('#subtitle').textContent = isOpen() ? 'Postulación abierta' : 'Postulación cerrada';
   $('#role-chip').innerHTML = S.isAdmin ? '<span class="chip neutral">Coordinación</span>' : '';
   $('#btn-admin').hidden = S.isAdmin || !S.code; $('#btn-logout').hidden = !S.code;
 }
 function renderTabs(){
   if(!S.isAdmin && (S.tab==='asignacion'||S.tab==='config')) S.tab='pedido';
   $$('#tabs [data-tab]').forEach(b=>{ const t=b.dataset.tab; if(t==='asignacion'||t==='config') b.hidden=!S.isAdmin; b.setAttribute('aria-selected', String(t===S.tab)); $('#tab-'+t).hidden = t!==S.tab; });
-  $('#c-cal').textContent = collectItems().length;
-  if(S.isAdmin) $('#c-asig').textContent = resolve().filter(i=>i.status==='rejected').length;
+  $('#c-cal').textContent = new Set(S.requests.map(r=>r.personId)).size;
+  if(S.isAdmin){ const {persons,byPerson}=resolve(); $('#c-asig').textContent = persons.filter(p=>!byPerson[p].chosen).length; }
 }
 function fillWho(sel, includeEmpty){
   const cur=sel.value; sel.innerHTML = (includeEmpty?'<option value="">Elegí tu nombre…</option>':'') + ['am','pm'].map(sh=>`<optgroup label="Turno ${SHIFT[sh]}">`+activeTeam().filter(p=>p.shift===sh).map(p=>`<option value="${esc(p.id)}">${esc(p.name)} · ${esc(p.area||'')}</option>`).join('')+'</optgroup>').join('');
   if(cur && $$('option',sel).some(o=>o.value===cur)) sel.value=cur;
 }
-function syncFlexUI(){ const fx=$('#flex').checked; $('#l-from').hidden=fx; $('#l-to').hidden=fx; $('#add-range').textContent = fx ? 'Marcarme sin fechas' : 'Agregar rango'; $('#note-label').textContent = fx ? 'Preferencias (opcional): ¿alguna idea de mes, o cosas a evitar?' : 'Comentario (opcional)'; $('#note').placeholder = fx ? 'Ej: probablemente febrero, o me adapto a lo que quede libre' : 'Ej: viaje ya reservado, casamiento, etc.'; }
+function syncFlexUI(){ const fx=$('#flex').checked; $('#opts').hidden=fx; $('#save-req').textContent = fx ? 'Guardar: sin fechas definidas' : 'Guardar mi pedido'; $('#note-label').textContent = fx ? 'Preferencias (opcional): ¿alguna idea de mes, o cosas a evitar?' : 'Comentario (opcional)'; $('#note').placeholder = fx ? 'Ej: probablemente febrero, o me adapto a lo que quede libre' : 'Ej: viaje ya reservado, casamiento, etc.'; }
+function updateDaysHints(root){ $$('.opt-row',root||document).forEach(r=>{ const f=$('.o-from',r).value, t=$('.o-to',r).value; $('.o-days',r).textContent = (f&&t&&t>=f)?daysBetween(f,t)+' días':''; }); }
+function fillFormFor(pid){ // carga en el formulario el pedido existente de la persona
+  const mine=S.requests.filter(r=>r.personId===pid); const fx=mine.find(r=>r.flexible);
+  $('#flex').checked=!!fx; $('#note').value = (fx? fx.note : (mine.find(r=>Number(r.option)===1)||{}).note) || '';
+  $$('.opt-row').forEach(row=>{ const o=mine.find(r=>!r.flexible && Number(r.option)===Number(row.dataset.opt)); $('.o-from',row).value=o?o.from:''; $('.o-to',row).value=o?o.to:''; });
+  syncFlexUI(); updateDaysHints(); S.formFor=pid;
+}
 function renderPedido(){
   const cfg=S.config||{};
   const who=$('#who'); fillWho(who,true);
   if(S.myPerson && !who.value) who.value=S.myPerson;
+  const pid=who.value;
+  if(pid && S.formFor!==pid) fillFormFor(pid);
   const blocked=$('#pedido-blocked'); const form=$('#pedido-form');
   let msg='';
   if(!S.team.length) msg='La postulación todavía no está configurada. Cuando esté lista vas a poder cargar tus fechas acá.';
   else if(cfg.open===false) msg='La postulación está cerrada. Si necesitás cambiar algo, hablá con coordinación.';
   blocked.hidden=!msg; blocked.textContent=msg; form.hidden=!!msg;
-  const criteria=(cfg.criteria&&cfg.criteria.length===3)?cfg.criteria:CRIT_KEYS;
-  $('#rules-text').innerHTML = `<p>Regla: ${RULE_TXT[cfg.rule||'shift']}${(Number(cfg.maxSimul)||1)>1?` (hasta ${cfg.maxSimul} a la vez)`:''}.</p>
-    <p style="margin-top:6px">Si dos pedidos se pisan, tiene prioridad quien va primero en: <b>${criteria.map(c=>CRIT[c]).join(' → ')}</b>.</p>
-    ${Number(cfg.maxDays)>0?`<p style="margin-top:6px">Tope: ${cfg.maxDays} días corridos por persona.</p>`:''}
-    ${cfg.note?`<p style="margin-top:6px">${esc(cfg.note)}</p>`:''}
-    ${cfg.periodStart?`<p style="margin-top:6px" class="muted">Las fechas tienen que caer entre el ${fmtL(cfg.periodStart)} y el ${fmtL(cfg.periodEnd)}.</p>`:''}
-    <p style="margin-top:6px" class="muted">Si todavía no sabés qué fechas querés, marcá "no tengo fechas definidas": coordinación te va a ubicar en lo que quede libre.</p>`;
-  $('#from').min=$('#to').min=cfg.periodStart||''; $('#from').max=$('#to').max=cfg.periodEnd||'';
-  syncFlexUI();
-  const team=teamById(); const pid=who.value;
-  const mine = collectItems().filter(it=>pid && it.personId===pid);
-  const myFlex = pid ? flexibles().find(r=>r.personId===pid) : null;
-  const list=$('#my-list'); const lead=$('#my-lead');
-  const pName = pid && team[pid] ? team[pid].name : '';
-  $('#my-title').textContent = pName ? `Rangos de ${pName}` : 'Tus rangos';
-  const canDel = isOpen() || S.isAdmin;
-  if(!mine.length && !myFlex){ list.innerHTML=''; lead.textContent = pName ? 'Todavía no hay rangos cargados.' : 'Elegí tu nombre para ver tus rangos.'; }
-  else {
-    lead.textContent = myFlex ? 'Estás marcado como sin fechas definidas.' : `${mine.length} rango${mine.length>1?'s':''} · ${mine.reduce((a,b)=>a+b.days,0)} días corridos en total.`;
+  $('#rules-text').innerHTML = `<p>Coordinación revisa todos los pedidos y arma la asignación. Cuando esté publicada, vas a ver acá qué opción te quedó.</p>${cfg.note?`<p style="margin-top:6px">${esc(cfg.note)}</p>`:''}`;
+  const team=teamById(); const mine=S.requests.filter(r=>r.personId===pid); const myFlex=mine.find(r=>r.flexible); const myOpts=collectItems().filter(it=>it.personId===pid).sort((a,b)=>a.option-b.option);
+  const card=$('#my-card'); card.hidden = !pid || !mine.length;
+  $('#clear-req').hidden = !pid || !mine.length;
+  if(!card.hidden){
+    const pName=team[pid]?team[pid].name:'';
+    $('#my-title').textContent = `Pedido de ${pName}`;
+    $('#my-lead').textContent = myFlex ? 'Estás marcado como sin fechas definidas.' : `Cargado el ${fmtTs(mine[0].createdAt)}. Podés editarlo arriba y volver a guardar.`;
     let html='';
-    if(myFlex) html += `<div class="req"><div class="dates">Sin fechas definidas</div><div><span class="chip warn">A definir con coordinación</span>${myFlex.note?`<div class="meta">${esc(myFlex.note)}</div>`:''}</div><div>${canDel?`<button class="btn xs danger" data-del="${esc(myFlex.id)}|${esc(pid)}">Quitar</button>`:''}</div></div>`;
-    html += mine.sort((a,b)=>a.from<b.from?-1:1).map(it=>{
-      const ps=publishedStatus(it);
-      const chip = ps ? (ps.status==='approved'?'<span class="chip ok">Aprobado</span>':'<span class="chip bad">No aprobado</span>') : '<span class="chip pend">Pendiente de asignación</span>';
-      return `<div class="req"><div class="dates num">${fmt(it.from)} – ${fmt(it.to)}</div><div><div>${chip} <span class="meta num">${it.days} días</span>${it.source!=='self'?' <span class="chip neutral">cargado por coordinación</span>':''}</div>${it.note?`<div class="meta">${esc(it.note)}</div>`:''}${ps&&ps.status==='rejected'&&ps.reason?`<div class="meta">${esc(ps.reason)}</div>`:''}</div><div>${canDel?`<button class="btn xs danger" data-del="${esc(it.id)}|${esc(pid)}">Quitar</button>`:''}</div></div>`;
-    }).join('');
-    list.innerHTML=html;
+    if(myFlex) html += `<div class="req"><div class="dates">Sin fechas definidas</div><div><span class="chip warn">A definir con coordinación</span>${myFlex.note?`<div class="meta">${esc(myFlex.note)}</div>`:''}</div><div></div></div>`;
+    html += myOpts.map(it=>{ const ps=publishedStatus(it); const chip = ps ? (ps.status==='approved'?'<span class="chip ok">Aprobada</span>':'<span class="chip bad">No aprobada</span>') : '<span class="chip pend">Pendiente</span>';
+      return `<div class="req"><div class="dates num">Opción ${it.option} · ${fmt(it.from)} – ${fmt(it.to)}</div><div><div>${chip} <span class="meta num">${it.days} días</span>${it.source!=='self'?' <span class="chip neutral">cargado por coordinación</span>':''}</div>${it.note?`<div class="meta">${esc(it.note)}</div>`:''}</div><div></div></div>`; }).join('');
+    $('#my-list').innerHTML=html;
   }
-  const rc=$('#result-card'); const pubs = mine.map(publishedStatus).filter(Boolean);
-  rc.hidden = !S.results || !mine.length;
+  const rc=$('#result-card'); const pubs=myOpts.map(publishedStatus).filter(Boolean);
+  rc.hidden = !S.results || !myOpts.length;
   if(!rc.hidden){
-    const ok=pubs.filter(p=>p.status==='approved');
-    $('#my-results').innerHTML = `<p class="small muted">Publicado el ${fmtTs(S.results.publishedAt)}.</p>` + (pubs.length? ok.length? `<div class="notice ok">Tenés aprobado: ${ok.map(p=>`<b class="num">${fmt(p.from)} – ${fmt(p.to)}</b>`).join(', ')}.</div>` : `<div class="notice bad">Ninguno de tus rangos quedó aprobado. Podés cargar otro rango en fechas libres.</div>` : `<div class="notice warn">Tus rangos actuales todavía no están en la última publicación.</div>`);
+    const ok=pubs.find(p=>p.status==='approved');
+    $('#my-results').innerHTML = `<p class="small muted">Publicado el ${fmtTs(S.results.publishedAt)}.</p>` + (pubs.length? ok? `<div class="notice ok">Te quedó la <b>opción ${ok.option}</b>: <b class="num">${fmt(ok.from)} – ${fmt(ok.to)}</b>.</div>` : `<div class="notice bad">Ninguna de tus opciones quedó aprobada. Coordinación se va a comunicar con vos para buscar otras fechas.</div>` : `<div class="notice warn">Cambiaste tu pedido después de la última publicación; todavía no está asignado.</div>`);
   }
-  $('#days-hint').textContent = ($('#from').value && $('#to').value && $('#to').value>=$('#from').value) ? daysBetween($('#from').value,$('#to').value)+' días' : '';
 }
 
 function renderCalendario(){
   const cfg=S.config||{}; const team=teamById(); const items=collectItems().filter(it=>team[it.personId]);
   const shiftF=$('#cal-shift').value;
-  let start=cfg.periodStart, end=cfg.periodEnd;
-  if(!start||!end){ if(items.length){ start=items.reduce((a,b)=>a<b.from?a:b.from, items[0].from); end=items.reduce((a,b)=>a>b.to?a:b.to, items[0].to); start=addDays(start,-7); end=addDays(end,7);} }
+  let start=cfg.periodStart||'', end=cfg.periodEnd||'';
+  if(items.length){ const mn=items.reduce((a,b)=>a<b.from?a:b.from, items[0].from), mx=items.reduce((a,b)=>a>b.to?a:b.to, items[0].to); if(!start||mn<start) start=addDays(mn,-7); if(!end||mx>end) end=addDays(mx,7); }
   const tl=$('#timeline'); const fx=flexibles().filter(r=>team[r.personId]);
   $('#cal-flex').textContent = fx.length ? 'Sin fechas definidas todavía: '+fx.map(r=>team[r.personId].name).join(', ')+'.' : '';
-  if(!start||!end){ tl.innerHTML='<div class="empty">Todavía no hay período definido ni pedidos cargados.</div>'; $('#cal-sub').textContent=''; return; }
-  const n=daysBetween(start,end); if(n<1||n>400){ tl.innerHTML='<div class="empty">El período es demasiado largo para mostrarlo (máx. 400 días).</div>'; return; }
+  if(!start||!end){ tl.innerHTML='<div class="empty">Todavía no hay pedidos cargados.</div>'; $('#cal-sub').textContent=''; return; }
+  const n=daysBetween(start,end); if(n<1||n>500){ tl.innerHTML='<div class="empty">El rango de fechas es demasiado largo para mostrarlo (máx. 500 días).</div>'; return; }
   const today=todayStr();
-  const resolved = S.isAdmin ? resolve() : null;
-  const statusOf = it => { if(S.isAdmin){ const r=resolved.find(x=>x.key===it.key); return r?{status:r.status, ovr:r.overridden, reason:r.autoReason}:{status:'pend'}; } const ps=publishedStatus(it); return ps?{status:ps.status, reason:ps.reason}:{status:'pend'}; };
-  $('#cal-sub').textContent = `${fmtL(start)} – ${fmtL(end)} · ${items.length} pedido${items.length!==1?'s':''} de ${new Set(items.map(i=>i.personId)).size} personas`;
+  const resolved = S.isAdmin ? resolve().items : null;
+  const statusOf = it => { if(S.isAdmin){ const r=resolved.find(x=>x.key===it.key); return r?{status:r.status||'pend', ovr:r.overridden, reason:r.reason}:{status:'pend'}; } const ps=publishedStatus(it); return ps?{status:ps.status, reason:ps.reason}:{status:'pend'}; };
+  $('#cal-sub').textContent = `${fmtL(start)} – ${fmtL(end)} · ${new Set(items.map(i=>i.personId)).size} personas con opciones cargadas`;
   let days=''; let d=start, col=1; const monthSpans=[]; let curM=null;
   while(d<=end){ const dt=pd(d); const m=dt.getUTCMonth()+'-'+dt.getUTCFullYear(); if(m!==curM){ monthSpans.push({label:MESES_L[dt.getUTCMonth()]+' '+dt.getUTCFullYear(), start:col, n:0}); curM=m; } monthSpans[monthSpans.length-1].n++;
     const dow=dt.getUTCDay(); const we=dow===0||dow===6; const mo=dow===1;
@@ -572,9 +585,10 @@ function renderCalendario(){
     html += `<div class="tl-inner tl-group"><div class="tl-label"><span class="chip ${sh}">${SHIFT[sh]}</span></div><div class="tl-cells" ${gtc}></div></div>`;
     Array.from(new Set(people.map(p=>p.area||''))).sort().forEach(ar=>{
       people.filter(p=>(p.area||'')===ar).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p=>{
-        const its=items.filter(i=>i.personId===p.id); const isFlex=fx.some(r=>r.personId===p.id);
-        const bars = its.map(it=>{ const st=statusOf(it); const s=it.from<start?1:colOf(it.from); const e=it.to>end?n:colOf(it.to); const tip=`${p.name}: ${fmtL(it.from)} – ${fmtL(it.to)} (${it.days} días)${st.reason?'\n'+st.reason:''}${it.note?'\n'+it.note:''}`; return `<div class="bar ${st.status}${st.ovr?' ovr':''}" style="grid-column:${s} / ${e+1}" title="${esc(tip)}">${it.days>=4?`${fmt(it.from)}–${fmt(it.to)}`:''}</div>`; }).join('');
-        html += `<div class="tl-inner"><div class="tl-label"><span class="nm">${esc(p.name)}</span>${isFlex?'<span class="chip warn" style="font-size:10px">sin fechas</span>':''}<span class="ar">${esc(p.area||'')}</span></div><div class="tl-cells" ${gtc}>${cells()}${bars}</div></div>`;
+        const its=items.filter(i=>i.personId===p.id).sort((a,b)=>a.option-b.option); const isFlex=fx.some(r=>r.personId===p.id);
+        // una sub-fila por opción para que no se superpongan
+        const rowsHtml = its.length ? its.map(it=>{ const st=statusOf(it); const s=colOf(it.from), e=colOf(it.to); const tip=`${p.name} · opción ${it.option}: ${fmtL(it.from)} – ${fmtL(it.to)} (${it.days} días)${st.reason?'\n'+st.reason:''}${it.note?'\n'+it.note:''}`; return `<div class="tl-cells sub" ${gtc}>${cells()}<div class="bar ${st.status}${st.ovr?' ovr':''}" style="grid-column:${s} / ${e+1}" title="${esc(tip)}">${it.days>=4?`${it.option}· ${fmt(it.from)}–${fmt(it.to)}`:''}</div></div>`; }).join('') : `<div class="tl-cells" ${gtc}>${cells()}</div>`;
+        html += `<div class="tl-inner"><div class="tl-label"><span class="nm">${esc(p.name)}</span>${isFlex?'<span class="chip warn" style="font-size:10px">sin fechas</span>':''}<span class="ar">${esc(p.area||'')}</span></div><div class="tl-rows">${rowsHtml}</div></div>`;
       });
     });
   });
@@ -582,36 +596,37 @@ function renderCalendario(){
 }
 
 function renderAsignacion(){
-  const items=resolve(); const scores=scoresOf(); const people=activeTeam();
-  const fx=flexibles(); const postulated=new Set(items.map(i=>i.personId).concat(fx.map(r=>r.personId)));
-  const rej=items.filter(i=>i.status==='rejected').length;
+  const {items,byPerson,persons}=resolve(); const scores=scoresOf(); const people=activeTeam(); const team=teamById();
+  const fx=flexibles(); const responded=new Set(S.requests.map(r=>r.personId));
+  const unassigned=persons.filter(p=>!byPerson[p].chosen);
   const lastChange = S.requests.reduce((a,r)=>(r.createdAt&&r.createdAt>a)?r.createdAt:a,'');
   const stale = !S.results || (lastChange && S.results.publishedAt < lastChange);
   const noSen = people.filter(p=>!scores[p.id]||!scores[p.id].seniorityDate).length;
   $('#tiles').innerHTML = `
-    <div class="tile"><div class="v num">${items.length}</div><div class="l">pedidos con fechas</div></div>
-    <div class="tile"><div class="v num">${postulated.size}<span class="muted" style="font-size:15px;font-weight:500"> / ${people.length}</span></div><div class="l">personas respondieron</div></div>
-    <div class="tile ${rej?'bad':'ok'}"><div class="v num">${rej}</div><div class="l">no aprobados por solapamiento</div></div>
+    <div class="tile"><div class="v num">${responded.size}<span class="muted" style="font-size:15px;font-weight:500"> / ${people.length}</span></div><div class="l">personas respondieron</div></div>
+    <div class="tile ok"><div class="v num">${persons.length-unassigned.length}</div><div class="l">con una opción aprobada</div></div>
+    <div class="tile ${unassigned.length?'bad':''}"><div class="v num">${unassigned.length}</div><div class="l">sin ninguna opción posible</div></div>
     <div class="tile ${fx.length?'warn':''}"><div class="v num">${fx.length}</div><div class="l">sin fechas definidas</div></div>
     <div class="tile ${noSen?'warn':''}"><div class="v num">${noSen}</div><div class="l">sin fecha de ingreso cargada</div></div>`;
   $('#btn-toggle-open').textContent = isOpen() ? 'Cerrar postulación' : 'Abrir postulación';
   $('#btn-publish').disabled = !items.length;
   const ps=$('#publish-state');
-  if(!S.results){ ps.className='notice warn small'; ps.textContent='Todavía no publicaste ninguna asignación: el equipo ve sus pedidos como pendientes.'; }
-  else if(stale){ ps.className='notice warn small'; ps.textContent=`Última publicación: ${fmtTs(S.results.publishedAt)}. Hubo pedidos nuevos después; el equipo está viendo una versión vieja.`; }
+  if(!S.results){ ps.className='notice warn small'; ps.textContent='Todavía no publicaste ninguna asignación: el equipo ve sus opciones como pendientes.'; }
+  else if(stale){ ps.className='notice warn small'; ps.textContent=`Última publicación: ${fmtTs(S.results.publishedAt)}. Hubo pedidos nuevos o editados después; el equipo está viendo una versión vieja.`; }
   else { ps.className='notice ok small'; ps.textContent=`Publicado el ${fmtTs(S.results.publishedAt)}. El equipo ve el resultado de esta tabla (si cambiaste forzados, volvé a publicar).`; }
-  const missing=people.filter(p=>!postulated.has(p.id));
+  const missing=people.filter(p=>!responded.has(p.id));
   const t=$('#asig-table');
   if(!items.length){ t.innerHTML=`<tbody><tr><td class="empty">Todavía no hay pedidos con fechas. Podés cargarlos a mano o importarlos del Form más abajo.</td></tr></tbody>`; }
-  else t.innerHTML = `<thead><tr><th>#</th><th>Persona</th><th>Turno / área</th><th>Ingreso</th><th>Métrica</th><th>Fechas</th><th>Días</th><th>Postuló</th><th>Estado</th><th>Motivo</th><th></th></tr></thead><tbody>` +
-    items.map(it=>{ const sc=scores[it.personId]||{}; const st=it.status;
-      const chip = st==='approved' ? `<span class="chip ok${it.overridden?' ovr':''}">Aprobado${it.overridden?' · forzado':''}</span>` : `<span class="chip bad${it.overridden?' ovr':''}">No aprobado${it.overridden?' · forzado':''}</span>`;
-      return `<tr class="${st==='rejected'?'rej':''}"><td class="num">${it.rank}</td><td class="who">${esc(it.person.name)}</td><td><span class="chip ${it.person.shift}">${SHIFT[it.person.shift]}</span> <span class="small muted">${esc(it.person.area||'')}</span></td><td class="num">${sc.seniorityDate?fmtL(sc.seniorityDate):'<span class="chip warn">falta</span>'}</td><td class="num">${sc.metric!==undefined&&sc.metric!==''&&sc.metric!==null?esc(sc.metric):'<span class="muted">—</span>'}</td><td class="num" style="white-space:nowrap">${fmt(it.from)} – ${fmt(it.to)}${it.note?`<div class="small muted">${esc(it.note)}</div>`:''}</td><td class="num">${it.days}</td><td class="num small">${fmtTs(it.createdAt)}${it.source!=='self'?`<div class="muted">${it.source==='import'?'importado':'manual'}</div>`:''}</td><td>${chip}</td><td class="reason">${it.overridden && it.auto!==st ? `Automático daría: ${it.auto==='approved'?'aprobado':'no aprobado'}. ` : ''}${esc(it.autoReason)}</td>
-      <td class="actions">${st!=='approved'?`<button class="btn xs" data-ovr="${esc(it.key)}|approved">Aprobar</button>`:''}${st!=='rejected'?`<button class="btn xs" data-ovr="${esc(it.key)}|rejected">Rechazar</button>`:''}${it.overridden?`<button class="btn xs ghost" data-ovr="${esc(it.key)}|auto">Auto</button>`:''} <button class="btn xs ghost danger" data-del="${esc(it.id)}|" title="Quitar el pedido">✕</button></td></tr>`; }).join('') +
-    `</tbody>` + (missing.length?`<tfoot><tr><td colspan="11" class="small muted">Sin responder todavía: ${missing.map(p=>esc(p.name)).join(', ')}.</td></tr></tfoot>`:'');
-  const fl=$('#flex-list'); const team=teamById();
+  else t.innerHTML = `<thead><tr><th>#</th><th>Persona</th><th>Turno / área</th><th>Ingreso</th><th>Métrica</th><th>Opción</th><th>Fechas</th><th>Días</th><th>Postuló</th><th>Estado</th><th>Motivo</th><th></th></tr></thead><tbody>` +
+    items.map((it,i)=>{ const sc=scores[it.personId]||{}; const st=it.status; const first = i===0 || items[i-1].personId!==it.personId; const nOpts=byPerson[it.personId].opts.length;
+      const chip = st==='approved' ? `<span class="chip ok${it.overridden?' ovr':''}">Aprobada${it.overridden?' · forzada':''}</span>` : `<span class="chip bad${it.overridden?' ovr':''}">No aprobada${it.overridden?' · forzada':''}</span>`;
+      const personCells = first ? `<td class="num" rowspan="${nOpts}">${it.rank}</td><td class="who" rowspan="${nOpts}">${esc(it.person.name)}${it.source!=='self'?`<div class="small muted">${it.source==='import'?'importado':'manual'}</div>`:''}</td><td rowspan="${nOpts}"><span class="chip ${it.person.shift}">${SHIFT[it.person.shift]}</span> <span class="small muted">${esc(it.person.area||'')}</span></td><td class="num" rowspan="${nOpts}">${sc.seniorityDate?fmtL(sc.seniorityDate):'<span class="chip warn">falta</span>'}</td><td class="num" rowspan="${nOpts}">${sc.metric!==undefined&&sc.metric!==''&&sc.metric!==null?esc(sc.metric):'<span class="muted">—</span>'}</td>` : '';
+      return `<tr class="${st==='rejected'?'rej':''}${first?' first':''}">${personCells}<td class="num">Op. ${it.option}</td><td class="num" style="white-space:nowrap">${fmt(it.from)} – ${fmt(it.to)}${it.note?`<div class="small muted">${esc(it.note)}</div>`:''}</td><td class="num">${it.days}</td><td class="num small">${fmtTs(it.createdAt)}</td><td>${chip}</td><td class="reason">${esc(it.reason)}</td>
+      <td class="actions">${st!=='approved'?`<button class="btn xs" data-ovr="${esc(it.key)}|approved">Aprobar</button>`:''}${st!=='rejected'?`<button class="btn xs" data-ovr="${esc(it.key)}|rejected">Rechazar</button>`:''}${it.overridden?`<button class="btn xs ghost" data-ovr="${esc(it.key)}|auto">Auto</button>`:''}${first?` <button class="btn xs ghost danger" data-del="${esc(it.personId)}" title="Quitar todo el pedido de esta persona">✕</button>`:''}</td></tr>`; }).join('') +
+    `</tbody>` + (missing.length?`<tfoot><tr><td colspan="12" class="small muted">Sin responder todavía: ${missing.map(p=>esc(p.name)).join(', ')}.</td></tr></tfoot>`:'');
+  const fl=$('#flex-list');
   fl.hidden=!fx.length;
-  if(fx.length) fl.innerHTML = `<h3>Sin fechas definidas</h3><p class="small muted" style="margin:6px 0 10px">Estas personas prefieren que las ubiques en lo que quede libre. Cuando definan fechas, cargalas acá abajo a su nombre.</p><div class="stack">`+fx.filter(r=>team[r.personId]).map(r=>`<div class="req"><div class="dates">${esc(team[r.personId].name)}</div><div><span class="chip ${team[r.personId].shift}">${SHIFT[team[r.personId].shift]}</span> <span class="small muted">${esc(team[r.personId].area||'')}</span>${r.note?`<div class="meta">${esc(r.note)}</div>`:''}<div class="meta">Respondió ${fmtTs(r.createdAt)}</div></div><div><button class="btn xs ghost danger" data-del="${esc(r.id)}|">Quitar</button></div></div>`).join('')+'</div>';
+  if(fx.length) fl.innerHTML = `<h3>Sin fechas definidas</h3><p class="small muted" style="margin:6px 0 10px">Estas personas prefieren que las ubiques en lo que quede libre. Cuando definan fechas, cargalas a su nombre acá abajo.</p><div class="stack">`+fx.filter(r=>team[r.personId]).map(r=>`<div class="req"><div class="dates">${esc(team[r.personId].name)}</div><div><span class="chip ${team[r.personId].shift}">${SHIFT[team[r.personId].shift]}</span> <span class="small muted">${esc(team[r.personId].area||'')}</span>${r.note?`<div class="meta">${esc(r.note)}</div>`:''}<div class="meta">Respondió ${fmtTs(r.createdAt)}</div></div><div><button class="btn xs ghost danger" data-del="${esc(r.personId)}">Quitar</button></div></div>`).join('')+'</div>';
   fillWho($('#m-who'),false);
 }
 
@@ -638,10 +653,9 @@ function readConfigForm(){
 
 // ---------- writes ----------
 async function guard(fn){ if(S.saving){ toast('Esperá, guardando…'); return; } S.saving=true; document.body.style.cursor='progress'; try{ await fn(); } catch(e){ console.error(e); toast(e&&e.code==='admin_only'?'Solo coordinación puede hacer eso.':e&&e.code==='bad_code'?'La clave ya no es válida. Volvé a entrar.':(e&&e.message)?e.message:'No se pudo guardar. Probá de nuevo.'); if(e&&e.code==='bad_code'){ S.code=''; store.set('vacx-code',null); showGate(); } } finally{ S.saving=false; document.body.style.cursor=''; } }
-function validRange(from,to,cfg){
-  if(!from||!to) return 'Completá desde y hasta.'; if(to<from) return 'La fecha "hasta" tiene que ser posterior a "desde".';
-  if(cfg.periodStart && from<cfg.periodStart) return `El período empieza el ${fmtL(cfg.periodStart)}.`; if(cfg.periodEnd && to>cfg.periodEnd) return `El período termina el ${fmtL(cfg.periodEnd)}.`;
-  if(daysBetween(from,to)>90) return 'Un rango no puede superar 90 días.'; return '';
+function readOptions(rows){ // rows: [{from,to}] → valida y devuelve {options, error}
+  const options=[]; for(let i=0;i<rows.length;i++){ const {from,to}=rows[i]; if(!from&&!to) continue; if(!from||!to) return {error:`Completá desde y hasta en la opción ${i+1}.`}; if(to<from) return {error:`En la opción ${i+1} la fecha "hasta" es anterior a "desde".`}; options.push({from,to}); }
+  if(!options.length) return {error:'Cargá al menos una opción de fechas.'}; return {options};
 }
 
 // ---------- events ----------
@@ -652,34 +666,34 @@ $('#btn-logout').addEventListener('click', ()=>{ S.code=''; S.isAdmin=false; S.r
 $('#tabs').addEventListener('click', e=>{ const b=e.target.closest('[data-tab]'); if(!b) return; S.tab=b.dataset.tab; renderTabs(); if(S.tab==='calendario') renderCalendario(); });
 $('#cal-shift').addEventListener('change', renderCalendario);
 $('#flex').addEventListener('change', syncFlexUI);
-['#from','#to'].forEach(id=>$(id).addEventListener('change', ()=>{ if($('#from').value && !$('#to').value) $('#to').value=addDays($('#from').value,13); $('#days-hint').textContent = ($('#from').value && $('#to').value && $('#to').value>=$('#from').value) ? daysBetween($('#from').value,$('#to').value)+' días' : ''; }));
-$('#who').addEventListener('change', ()=>{ S.myPerson=$('#who').value; store.set('vacx-who', S.myPerson); renderPedido(); });
-$('#add-range').addEventListener('click', ()=>guard(async()=>{
-  const cfg=S.config||{}; const personId=$('#who').value; if(!personId){ toast('Elegí tu nombre primero.'); return; }
+$('#opts').addEventListener('change', e=>{ const row=e.target.closest('.opt-row'); if(row && e.target.classList.contains('o-from') && !$('.o-to',row).value) $('.o-to',row).value=addDays(e.target.value,13); updateDaysHints(); });
+$('#who').addEventListener('change', ()=>{ S.myPerson=$('#who').value; store.set('vacx-who', S.myPerson); S.formFor=null; renderPedido(); });
+$('#save-req').addEventListener('click', ()=>guard(async()=>{
+  const personId=$('#who').value; if(!personId){ toast('Elegí tu nombre primero.'); return; }
   const note=$('#note').value.trim();
-  if($('#flex').checked){ await api({action:'setFlexible', personId, note}); $('#note').value=''; $('#flex').checked=false; syncFlexUI(); toast('Listo, quedaste como sin fechas definidas.'); return; }
-  const from=$('#from').value,to=$('#to').value; const err=validRange(from,to,cfg); if(err){ toast(err); return; }
-  if(collectItems().filter(it=>it.personId===personId).some(it=>overlap(it,{from,to}))){ toast('Ese rango se pisa con otro tuyo ya cargado.'); return; }
-  await api({action:'addRange', personId, from, to, note, source:'self'});
-  $('#from').value=$('#to').value=$('#note').value=''; $('#days-hint').textContent=''; toast('Rango cargado.');
+  if($('#flex').checked){ await api({action:'setRequest', personId, flexible:true, note}); toast('Listo, quedaste como sin fechas definidas.'); S.formFor=null; renderPedido(); return; }
+  const rows=$$('.opt-row').map(r=>({from:$('.o-from',r).value, to:$('.o-to',r).value})); const {options,error}=readOptions(rows); if(error){ toast(error); return; }
+  await api({action:'setRequest', personId, options, note}); toast('Pedido guardado.'); S.formFor=null; renderPedido();
 }));
+$('#clear-req').addEventListener('click', e=>{ const b=e.currentTarget; if(b.dataset.armed!=='1'){ b.dataset.armed='1'; b.textContent='¿Seguro? Quitar'; setTimeout(()=>{ b.dataset.armed=''; b.textContent='Quitar mi pedido'; },4000); return; } b.dataset.armed=''; b.textContent='Quitar mi pedido'; guard(async()=>{ await api({action:'clearRequest', personId:$('#who').value}); S.formFor=null; renderPedido(); toast('Pedido quitado.'); }); });
 document.addEventListener('click', e=>{
-  const d=e.target.closest('[data-del]'); if(d){ const [id,personId]=d.dataset.del.split('|');
-    if(d.dataset.armed!=='1'){ d.dataset.armed='1'; d.dataset.label=d.textContent; d.textContent='¿Seguro? Quitar'; setTimeout(()=>{ if(d.isConnected){ d.dataset.armed=''; d.textContent=d.dataset.label; } },4000); return; }
-    guard(async()=>{ await api({action: S.isAdmin?'adminRemove':'removeRange', id, personId}); toast('Quitado.'); }); return; }
+  const d=e.target.closest('[data-del]'); if(d){ const personId=d.dataset.del;
+    if(d.dataset.armed!=='1'){ d.dataset.armed='1'; d.dataset.label=d.textContent; d.textContent='¿Seguro?'; setTimeout(()=>{ if(d.isConnected){ d.dataset.armed=''; d.textContent=d.dataset.label; } },4000); return; }
+    guard(async()=>{ await api({action:'removePerson', personId}); toast('Pedido quitado.'); }); return; }
   const o=e.target.closest('[data-ovr]'); if(o){ const [key,val]=o.dataset.ovr.split('|'); guard(()=>api({action:'override', key, status: val==='auto'?'':val})); return; }
 });
 $('#btn-toggle-open').addEventListener('click', ()=>guard(async()=>{ const open=!isOpen(); await api({action:'setOpen', open}); toast(open?'Postulación abierta.':'Postulación cerrada.'); }));
 $('#btn-publish').addEventListener('click', ()=>guard(async()=>{
-  const items=resolve().map(it=>({personId:it.personId, from:it.from, to:it.to, status:it.status, reason: it.status==='rejected' ? (it.overridden && !it.autoReason ? 'Definido por coordinación' : it.autoReason) : ''}));
+  const items=resolve().items.map(it=>({personId:it.personId, option:it.option, from:it.from, to:it.to, status:it.status, reason: it.status==='rejected' ? it.reason : ''}));
   await api({action:'publish', items}); toast('Asignación publicada. El equipo ya la ve.');
 }));
 $('#m-add').addEventListener('click', ()=>guard(async()=>{
-  const personId=$('#m-who').value; const from=$('#m-from').value,to=$('#m-to').value; const err=validRange(from,to,S.config||{}); if(!personId){ toast('Elegí la persona.'); return; } if(err){ toast(err); return; }
-  await api({action:'addRange', personId, from, to, note:$('#m-note').value.trim(), source:'manual'});
-  $('#m-from').value=$('#m-to').value=$('#m-note').value=''; toast('Pedido cargado.');
+  const personId=$('#m-who').value; if(!personId){ toast('Elegí la persona.'); return; }
+  const rows=[1,2,3].map(i=>({from:$('#m-from'+i).value, to:$('#m-to'+i).value})); const {options,error}=readOptions(rows); if(error){ toast(error); return; }
+  await api({action:'setRequest', personId, options, note:$('#m-note').value.trim(), source:'manual'});
+  [1,2,3].forEach(i=>{ $('#m-from'+i).value=$('#m-to'+i).value=''; }); $('#m-note').value=''; toast('Pedido cargado.');
 }));
-$('#m-flex').addEventListener('click', ()=>guard(async()=>{ const personId=$('#m-who').value; if(!personId){ toast('Elegí la persona.'); return; } await api({action:'setFlexible', personId, note:$('#m-note').value.trim(), source:'manual'}); $('#m-note').value=''; toast('Marcado como sin fechas definidas.'); }));
+$('#m-flex').addEventListener('click', ()=>guard(async()=>{ const personId=$('#m-who').value; if(!personId){ toast('Elegí la persona.'); return; } await api({action:'setRequest', personId, flexible:true, note:$('#m-note').value.trim(), source:'manual'}); $('#m-note').value=''; toast('Marcado como sin fechas definidas.'); }));
 // import
 function parseDate(s){ s=s.trim(); let m; if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`; if((m=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/))){ let y=m[3]; if(y.length===2) y='20'+y; return `${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`; } return null; }
 function matchPerson(name){ const n=norm(name); const team=activeTeam(); let hit=team.find(p=>norm(p.name)===n); if(hit) return hit; let hits=team.filter(p=>norm(p.name).includes(n)||n.includes(norm(p.name))); if(hits.length===1) return hits[0]; const first=n.split(/\s+/)[0]; hits=team.filter(p=>norm(p.name).split(/\s+/)[0]===first); return hits.length===1?hits[0]:null; }
@@ -687,10 +701,10 @@ $('#imp-preview').addEventListener('click', ()=>{
   const lines=$('#imp-text').value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean); const plan=[]; const out=[];
   lines.forEach((line,i)=>{ const cells=line.split(/\t|;|,(?=\s*[^\d\s])|,(?=\s*\d{1,2}[\/.-])/).map(c=>c.trim()).filter(Boolean); const dates=[]; let name=null;
     if(cells.length && /^(nombre|name|marca temporal|timestamp)/i.test(cells[0])) return;
-    cells.forEach(c=>{ const d=parseDate(c); if(d && dates.length<2 && !/\d{1,2}:\d{2}/.test(c)) dates.push(d); else if(!name && /[a-záéíóúñ]/i.test(c) && !/\d{1,2}:\d{2}/.test(c)) name=c; });
-    const p=name?matchPerson(name):null;
-    if(!p||dates.length<2||dates[1]<dates[0]){ out.push(`<div class="notice bad">Línea ${i+1}: ${esc(line.slice(0,80))} → ${!name?'sin nombre':!p?`no reconozco a "${esc(name)}"`:'faltan fechas válidas'}</div>`); return; }
-    plan.push({personId:p.id, from:dates[0], to:dates[1], note:''}); out.push(`<div class="notice ok">${esc(p.name)}: ${fmt(dates[0])} – ${fmt(dates[1])} (${daysBetween(dates[0],dates[1])} días)</div>`);
+    cells.forEach(c=>{ const d=parseDate(c); if(d && !/\d{1,2}:\d{2}/.test(c)) dates.push(d); else if(!name && /[a-záéíóúñ]/i.test(c) && !/\d{1,2}:\d{2}/.test(c)) name=c; });
+    const p=name?matchPerson(name):null; const options=[]; for(let k=0;k+1<dates.length && options.length<3;k+=2){ if(dates[k+1]>=dates[k]) options.push({from:dates[k],to:dates[k+1]}); }
+    if(!p||!options.length){ out.push(`<div class="notice bad">Línea ${i+1}: ${esc(line.slice(0,80))} → ${!name?'sin nombre':!p?`no reconozco a "${esc(name)}"`:'faltan fechas válidas (pares desde/hasta)'}</div>`); return; }
+    plan.push({personId:p.id, options, note:''}); out.push(`<div class="notice ok">${esc(p.name)}: ${options.map((o,j)=>`op. ${j+1} ${fmt(o.from)}–${fmt(o.to)}`).join(' · ')}</div>`);
   });
   S.importPlan=plan; $('#imp-out').innerHTML=out.join('')||'<span class="muted">Nada para importar.</span>'; $('#imp-commit').hidden=!plan.length; $('#imp-n').textContent=plan.length?`(${plan.length})`:'';
 });
@@ -703,7 +717,7 @@ $('#cf-add-person').addEventListener('click', ()=>{ let tb=$('#team-table tbody'
 $('#cf-discard').addEventListener('click', ()=>{ S.cfgDirty=false; S.cfgRendered=''; renderConfig(); });
 $('#cf-save').addEventListener('click', ()=>guard(async()=>{
   const {cfg,team,critOk}=readConfigForm(); if(!critOk){ toast('Los tres criterios de desempate tienen que ser distintos.'); return; }
-  if(cfg.periodStart && cfg.periodEnd && cfg.periodEnd<cfg.periodStart){ toast('El período termina antes de empezar.'); return; }
+  if(cfg.periodStart && cfg.periodEnd && cfg.periodEnd<cfg.periodStart){ toast('El calendario termina antes de empezar.'); return; }
   const ids=team.map(p=>p.id); if(new Set(ids).size!==ids.length){ toast('Hay dos personas con el mismo nombre; diferencialas (ej. apellido).'); return; }
   await api({action:'saveConfig', config:cfg}); await api({action:'saveTeam', team});
   S.cfgDirty=false; S.cfgRendered=''; renderConfig(); toast('Guardado.');
