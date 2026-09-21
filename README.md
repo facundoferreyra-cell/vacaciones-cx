@@ -1,5 +1,8 @@
 # Vacaciones CX
 
+**Página:** https://facundoferreyra-cell.github.io/vacaciones-cx/  
+**Datos:** Google Sheet "Vacaciones CX" (Drive de facundo.ferreyra@coderhouse.com) → Extensiones → Apps Script.
+
 Página para que el equipo de CX de Coderhouse postule sus fechas de vacaciones y coordinación las asigne por prioridad (antigüedad → métricas → orden de llegada), detectando solapamientos por turno.
 
 - **Página:** GitHub Pages (`index.html`, sin dependencias).
