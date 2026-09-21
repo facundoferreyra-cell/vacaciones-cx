@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vacaciones CX</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --surface-2:#EAEEF4; --line:#D6DCE5; --line-2:#E6EAF0;
+  --ink:#1B2432; --ink-2:#4A5568; --ink-3:#7B8794;
+  --accent:#E8552B; --accent-ink:#FFFFFF; --accent-soft:#FDE9E1;
+  --am:#B97A0B; --am-soft:#FBF0D3; --pm:#4657CF; --pm-soft:#E3E6FB;
+  --ok:#2C7A4F; --ok-soft:#DCF2E4; --bad:#BE3535; --bad-soft:#FBE2E2; --warn:#A86E0F; --warn-soft:#FBF0D3;
+  --weekend:rgba(27,36,50,.055); --today:#E8552B; --focus:#4657CF;
+  --shadow:0 1px 2px rgba(27,36,50,.06), 0 8px 24px -12px rgba(27,36,50,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12161D; --surface:#1A2029; --surface-2:#232B36; --line:#303A47; --line-2:#28313D;
+    --ink:#E8ECF2; --ink-2:#AEB8C6; --ink-3:#7E8A99;
+    --accent:#FF7A4D; --accent-ink:#1B120E; --accent-soft:#3A2419;
+    --am:#E3AA3A; --am-soft:#3A2F12; --pm:#8E9AF2; --pm-soft:#242B4F;
+    --ok:#5CCB8E; --ok-soft:#173325; --bad:#F28585; --bad-soft:#3D1C1C; --warn:#E0B45A; --warn-soft:#3A2F12;
+    --weekend:rgba(255,255,255,.045); --today:#FF7A4D; --focus:#8E9AF2;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12161D; --surface:#1A2029; --surface-2:#232B36; --line:#303A47; --line-2:#28313D;
+  --ink:#E8ECF2; --ink-2:#AEB8C6; --ink-3:#7E8A99;
+  --accent:#FF7A4D; --accent-ink:#1B120E; --accent-soft:#3A2419;
+  --am:#E3AA3A; --am-soft:#3A2F12; --pm:#8E9AF2; --pm-soft:#242B4F;
+  --ok:#5CCB8E; --ok-soft:#173325; --bad:#F28585; --bad-soft:#3D1C1C; --warn:#E0B45A; --warn-soft:#3A2F12;
+  --weekend:rgba(255,255,255,.045); --today:#FF7A4D; --focus:#8E9AF2;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 56px;padding-inline:16px}
+h1,h2,h3{font-family:"Sora","IBM Plex Sans",system-ui,sans-serif;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:26px;font-weight:700}
+h2{font-size:18px;font-weight:600}
+h3{font-size:14px;font-weight:600;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em}
+p{margin:0}
+a{color:var(--pm)}
+button,input,select,textarea{font:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--ink-3)}
+.small{font-size:13px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;margin-bottom:18px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.status-line{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--ink-2)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ink-3);display:inline-block}
+.dot.live{background:var(--ok)}
+.dot.off{background:var(--bad)}
+
+/* tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px;overflow-x:auto;scrollbar-width:none}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px;margin-bottom:-1px;color:var(--ink-2);font-weight:500;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px;border-radius:4px}
+.tabs .count{display:inline-block;min-width:18px;padding:0 5px;margin-left:6px;border-radius:9px;background:var(--surface-2);color:var(--ink-2);font-size:11px;font-weight:600;line-height:18px;text-align:center}
+
+/* panels & cards */
+.grid{display:grid;gap:16px}
+.grid.two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.grid.aside{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+@media (max-width:820px){.grid.two,.grid.aside{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line-2);border-radius:10px;padding:18px}
+.card.flat{background:transparent;border-style:dashed}
+.card h2{margin-bottom:6px}
+.card .lead{color:var(--ink-2);margin-bottom:14px}
+.stack{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.row.between{justify-content:space-between}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.tile{background:var(--surface);border:1px solid var(--line-2);border-radius:10px;padding:12px 14px}
+.tile .v{font-family:"Sora",sans-serif;font-size:24px;font-weight:600;line-height:1.1}
+.tile .l{font-size:12px;color:var(--ink-3);margin-top:2px}
+.tile.warn .v{color:var(--warn)}
+.tile.bad .v{color:var(--bad)}
+.tile.ok .v{color:var(--ok)}
+
+/* forms */
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--ink-2);font-weight:500}
+label.f>span{display:flex;justify-content:space-between}
+input[type=text],input[type=date],input[type=number],select,textarea{
+  background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:8px 10px;color:var(--ink);min-width:0;width:100%}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+textarea{resize:vertical;min-height:88px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:8px 14px;font-weight:500;cursor:pointer;color:var(--ink)}
+.btn:hover{border-color:var(--ink-3)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(.95)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:4px 10px;font-size:13px}
+.btn.xs{padding:2px 8px;font-size:12px;border-radius:5px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.danger{color:var(--bad)}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;align-items:end}
+.hint{font-size:13px;color:var(--ink-3)}
+.notice{border-radius:8px;padding:10px 12px;font-size:14px;border:1px solid var(--line)}
+.notice.warn{background:var(--warn-soft);border-color:transparent;color:var(--ink)}
+.notice.ok{background:var(--ok-soft);border-color:transparent}
+.notice.bad{background:var(--bad-soft);border-color:transparent}
+.notice.info{background:var(--pm-soft);border-color:transparent}
+
+/* chips */
+.chip{display:inline-flex;align-items:center;gap:5px;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600;line-height:18px;white-space:nowrap}
+.chip.am{background:var(--am-soft);color:var(--am)}
+.chip.pm{background:var(--pm-soft);color:var(--pm)}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.chip.pend{background:var(--surface-2);color:var(--ink-2)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.neutral{background:var(--surface-2);color:var(--ink-2);font-weight:500}
+.chip.ovr{outline:2px dashed currentColor;outline-offset:-2px}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line-2);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line-2)}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-weight:600;background:var(--surface);position:sticky;top:0;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.actions{white-space:nowrap}
+tr.rej td{color:var(--ink-2)}
+.who{font-weight:600}
+.reason{font-size:13px;color:var(--ink-2);max-width:340px}
+table input,table select{padding:5px 8px;font-size:13px}
+table input[type=number]{width:80px}
+table input[type=date]{width:150px}
+
+/* my requests list */
+.req{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface)}
+.req .dates{font-family:"Sora",sans-serif;font-weight:600;white-space:nowrap}
+.req .meta{font-size:13px;color:var(--ink-2)}
+
+/* timeline */
+.tl{--day:14px;--label:220px;overflow-x:auto;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);position:relative}
+.tl-inner{display:grid;grid-template-columns:var(--label) 1fr;min-width:max-content}
+.tl-label{position:sticky;left:0;background:var(--surface);z-index:2;border-right:1px solid var(--line-2);padding:0 12px;display:flex;align-items:center;gap:8px;font-size:13px;min-height:34px;border-bottom:1px solid var(--line-2)}
+.tl-label .nm{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto;min-width:0}
+.tl-label .ar{color:var(--ink-3);font-size:11px;white-space:nowrap;flex:0 0 auto}
+.tl-group .tl-label{background:var(--surface-2);font-family:"Sora",sans-serif;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em;min-height:28px}
+.tl-group .tl-cells{background:var(--surface-2)}
+.tl-cells{display:grid;grid-auto-flow:column;grid-auto-columns:var(--day);position:relative;border-bottom:1px solid var(--line-2);min-height:34px}
+.tl-cells .d{border-left:1px solid var(--line-2);grid-row:1}
+.tl-cells .d.we{background:var(--weekend)}
+.tl-cells .d.mo{border-left-color:var(--line)}
+.tl-cells .d.today{box-shadow:inset 2px 0 0 var(--today)}
+.tl-head .tl-cells{min-height:0;border-bottom:0}
+.tl-head .tl-label{border-bottom:0;min-height:0}
+.tl-months .d{border-left:0;font-size:12px;font-weight:600;color:var(--ink-2);padding:6px 6px 0;white-space:nowrap;overflow:visible}
+.tl-days .d{font-size:10px;color:var(--ink-3);padding:2px 0 4px 3px;white-space:nowrap;overflow:visible;line-height:1.2}
+.tl-days .d.we{background:var(--weekend)}
+.bar{grid-row:1;align-self:center;height:20px;margin:0 1px;border-radius:5px;font-size:11px;font-weight:600;line-height:20px;padding:0 6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;z-index:1;cursor:default}
+.bar.pend{background:var(--surface-2);color:var(--ink-2);border:1px dashed var(--ink-3)}
+.bar.approved{background:var(--ok);color:#fff}
+.bar.rejected{background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad);opacity:.85}
+.bar.ovr{box-shadow:0 0 0 2px var(--surface),0 0 0 3px currentColor}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--ink-2);margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:16px;height:12px;border-radius:3px;display:inline-block}
+.legend i.pend{background:var(--surface-2);border:1px dashed var(--ink-3)}
+.legend i.approved{background:var(--ok)}
+.legend i.rejected{background:var(--bad-soft);border:1px solid var(--bad)}
+.legend i.we{background:var(--weekend);border:1px solid var(--line)}
+
+.empty{padding:32px 16px;text-align:center;color:var(--ink-3)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;box-shadow:var(--shadow);z-index:20;max-width:calc(100vw - 32px)}
+details summary{cursor:pointer;font-weight:500;color:var(--ink-2)}
+kbd{font-family:ui-monospace,monospace;font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+@media (prefers-reduced-motion:no-preference){.btn,.tabs button{transition:border-color .12s,background .12s}}
+@media (max-width:600px){.req{grid-template-columns:1fr;gap:6px} .tl{--label:130px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Equipo CX · Coderhouse</div>
+      <h1 id="title">Vacaciones</h1>
+      <p class="muted small" id="subtitle">Postulación de fechas y asignación por prioridad</p>
+    </div>
+    <div class="status-line">
+      <span><span class="dot" id="dot"></span> <span id="conn">Conectando…</span></span>
+      <span id="role-chip"></span>
+      <button class="btn xs ghost" id="btn-admin">Coordinación</button>
+      <button class="btn xs ghost" id="btn-logout" hidden>Salir</button>
+    </div>
+  </header>
+
+  <!-- ===== GATE ===== -->
+  <section id="gate" class="card" style="max-width:460px;margin:24px auto" hidden>
+    <h2>Clave del equipo</h2>
+    <p class="lead small">Para entrar necesitás la clave que compartió coordinación.</p>
+    <div class="row">
+      <input type="password" id="gate-code" placeholder="Clave" style="flex:1 1 200px" autocomplete="off">
+      <button class="btn primary" id="gate-go">Entrar</button>
+    </div>
+    <p class="hint" id="gate-msg" style="margin-top:8px"></p>
+  </section>
+
+  <section id="setup-missing" class="notice warn" hidden>
+    Falta conectar la página con el Google Sheet: hay que pegar la URL de la app web de Apps Script en la constante <kbd>API_URL</kbd> de <kbd>index.html</kbd>.
+  </section>
+
+  <div id="app" hidden>
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="pedido" aria-selected="true">Mi pedido</button>
+    <button role="tab" data-tab="calendario">Calendario<span class="count" id="c-cal">0</span></button>
+    <button role="tab" data-tab="asignacion" hidden>Asignación<span class="count" id="c-asig">0</span></button>
+    <button role="tab" data-tab="config" hidden>Equipo y criterios</button>
+  </nav>
+
+  <!-- ===== MI PEDIDO ===== -->
+  <section id="tab-pedido" class="grid aside">
+    <div class="stack">
+      <div class="card" id="pedido-card">
+        <h2>Postulá tus fechas</h2>
+        <p class="lead" id="pedido-lead">Elegí quién sos y cargá el rango que querés tomarte. Podés cargar más de un rango si vas a dividir las vacaciones.</p>
+        <div id="pedido-blocked" class="notice warn" hidden></div>
+        <div class="form-grid" id="pedido-form">
+          <label class="f" style="grid-column:1/-1"><span>¿Quién sos?</span><select id="who"></select></label>
+          <label class="f" style="grid-column:1/-1;flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="flex" style="width:auto"> <span>Todavía no tengo fechas definidas</span></label>
+          <label class="f" id="l-from"><span>Desde</span><input type="date" id="from"></label>
+          <label class="f" id="l-to"><span>Hasta <em class="hint" id="days-hint"></em></span><input type="date" id="to"></label>
+          <label class="f" style="grid-column:1/-1"><span id="note-label">Comentario (opcional)</span><input type="text" id="note" placeholder="Ej: viaje ya reservado, casamiento, etc."></label>
+          <div><button class="btn primary" id="add-range">Agregar rango</button></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2 id="my-title">Tus rangos</h2>
+        <p class="lead small" id="my-lead">Todavía no cargaste ninguno.</p>
+        <div class="stack" id="my-list"></div>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="card">
+        <h3>Cómo se asignan</h3>
+        <div id="rules-text" class="small" style="margin-top:8px;color:var(--ink-2)"></div>
+      </div>
+      <div class="card" id="result-card" hidden>
+        <h3>Tu asignación</h3>
+        <div id="my-results" class="stack" style="margin-top:8px"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CALENDARIO ===== -->
+  <section id="tab-calendario" hidden>
+    <div class="row between" style="margin-bottom:12px">
+      <div>
+        <h2>Calendario del equipo</h2>
+        <p class="muted small" id="cal-sub"></p>
+      </div>
+      <div class="row">
+        <label class="f" style="min-width:150px"><span>Turno</span><select id="cal-shift"><option value="">Todos</option><option value="am">Mañana</option><option value="pm">Tarde</option></select></label>
+      </div>
+    </div>
+    <div class="tl" id="timeline"></div>
+    <div class="legend">
+      <span><i class="pend"></i> Pedido sin resolver</span>
+      <span><i class="approved"></i> Aprobado</span>
+      <span><i class="rejected"></i> No aprobado</span>
+      <span><i class="we"></i> Fin de semana</span>
+    </div>
+    <div id="cal-flex" class="small muted" style="margin-top:10px"></div>
+  </section>
+
+  <!-- ===== ASIGNACIÓN (admin) ===== -->
+  <section id="tab-asignacion" hidden>
+    <div class="tiles" id="tiles"></div>
+    <div class="row between" style="margin-bottom:12px">
+      <div>
+        <h2>Asignación por prioridad</h2>
+        <p class="muted small">Orden sugerido según los criterios. Podés forzar cualquier fila y después publicar para que el equipo lo vea.</p>
+      </div>
+      <div class="row">
+        <button class="btn" id="btn-toggle-open"></button>
+        <button class="btn primary" id="btn-publish">Publicar asignación</button>
+      </div>
+    </div>
+    <div id="publish-state" class="notice info small" style="margin-bottom:12px"></div>
+    <div class="tbl-wrap"><table id="asig-table"></table></div>
+    <div id="flex-list" class="card flat" style="margin-top:12px" hidden></div>
+
+    <div class="grid two" style="margin-top:20px">
+      <div class="card">
+        <h2>Cargar pedido a nombre de alguien</h2>
+        <p class="lead small">Para quienes mandaron las fechas por otro lado.</p>
+        <div class="form-grid">
+          <label class="f"><span>Persona</span><select id="m-who"></select></label>
+          <label class="f"><span>Desde</span><input type="date" id="m-from"></label>
+          <label class="f"><span>Hasta</span><input type="date" id="m-to"></label>
+          <label class="f" style="grid-column:1/-1"><span>Comentario</span><input type="text" id="m-note"></label>
+          <div class="row"><button class="btn" id="m-add">Agregar</button><button class="btn ghost" id="m-flex">Marcar sin fechas definidas</button></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Importar respuestas del Form</h2>
+        <p class="lead small">Pegá las filas desde el Sheet de respuestas (una por línea): nombre, desde, hasta. Acepta <kbd>dd/mm/aaaa</kbd> o <kbd>aaaa-mm-dd</kbd>, separado por tab, coma o punto y coma.</p>
+        <textarea id="imp-text" placeholder="Ana Quintero	05/01/2027	16/01/2027
+Nico	20/02/2027	05/03/2027"></textarea>
+        <div class="row" style="margin-top:10px"><button class="btn" id="imp-preview">Previsualizar</button><button class="btn primary" id="imp-commit" hidden>Importar <span id="imp-n"></span></button></div>
+        <div id="imp-out" class="stack small" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CONFIG (admin) ===== -->
+  <section id="tab-config" hidden>
+    <div class="grid two">
+      <div class="card">
+        <h2>Período y reglas</h2>
+        <p class="lead small">Esto es lo que ve el equipo cuando postula.</p>
+        <div class="form-grid">
+          <label class="f" style="grid-column:1/-1"><span>Nombre de la ronda</span><input type="text" id="cf-title" placeholder="Vacaciones verano 2027"></label>
+          <label class="f"><span>Desde</span><input type="date" id="cf-start"></label>
+          <label class="f"><span>Hasta</span><input type="date" id="cf-end"></label>
+          <label class="f" style="grid-column:1/-1"><span>Regla de solapamiento</span>
+            <select id="cf-rule">
+              <option value="shift">Por turno: dos personas del mismo turno no se pisan</option>
+              <option value="shift-area">Por turno y área: no se pisan dentro del mismo turno y área</option>
+              <option value="none">Nadie se pisa, en todo el equipo</option>
+            </select></label>
+          <label class="f"><span>Máx. personas a la vez por grupo</span><input type="number" id="cf-max" min="1" max="10" value="1"></label>
+          <label class="f"><span>Máx. días por persona (0 = sin tope)</span><input type="number" id="cf-maxdays" min="0" max="60" value="0"></label>
+          <div style="grid-column:1/-1">
+            <span class="hint" style="display:block;margin-bottom:6px">Orden de desempate</span>
+            <div class="row">
+              <select id="cf-c1"></select><span class="muted">→</span><select id="cf-c2"></select><span class="muted">→</span><select id="cf-c3"></select>
+            </div>
+          </div>
+          <label class="f" style="grid-column:1/-1"><span>Nota para el equipo (opcional)</span><input type="text" id="cf-note" placeholder="Ej: mínimo 7 días corridos, avisar antes del 15/11"></label>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Cómo funciona</h2>
+        <div class="small stack" style="color:var(--ink-2)">
+          <p>Cada persona carga uno o más rangos, o se marca como <b>sin fechas definidas</b>. Los pedidos se ordenan según los criterios de desempate y se aprueban de a uno: un rango se aprueba si no se pisa con otro ya aprobado dentro de su grupo (según la regla). Si se pisa, queda como <b>no aprobado</b> con el motivo, y la persona puede cargar otro rango.</p>
+          <p>Antigüedad y métricas solo las ve coordinación: el equipo ve sus rangos, el calendario y, una vez que publicás, el resultado.</p>
+          <p>Los forzados manuales (aprobar o rechazar una fila) se respetan por encima del orden automático y quedan marcados con borde punteado.</p>
+          <p>Todo se guarda en el Google Sheet conectado; podés abrirlo para ver o corregir los datos a mano.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="row between" style="margin:20px 0 10px">
+      <h2>Equipo</h2>
+      <div class="row"><button class="btn sm" id="cf-add-person">+ Agregar persona</button></div>
+    </div>
+    <p class="hint" style="margin-bottom:10px">Fecha de ingreso = antigüedad (más antiguo, más prioridad). Métrica = número, más alto mejor (CSAT, cumplimiento de objetivos, un promedio, lo que uses).</p>
+    <div class="tbl-wrap"><table id="team-table"></table></div>
+    <div class="row between" style="margin-top:14px">
+      <span class="hint" id="cf-dirty"></span>
+      <div class="row"><button class="btn ghost" id="cf-discard">Descartar cambios</button><button class="btn primary" id="cf-save">Guardar</button></div>
+    </div>
+  </section>
+  </div>
+</div>
+
+<script>
+// ▼▼ URL de la app web de Apps Script (Implementar → Nueva implementación → App web) ▼▼
+const API_URL = '__API_URL__';
+// ▲▲ ------------------------------------------------------------------------------ ▲▲
+(function(){
+'use strict';
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const SHIFT = {am:'Mañana', pm:'Tarde'};
+const CRIT = {antiguedad:'Antigüedad', metricas:'Métricas', llegada:'Orden de llegada'};
+const CRIT_KEYS=['antiguedad','metricas','llegada'];
+const RULE_TXT = {
+  shift:'dos personas del <b>mismo turno</b> no pueden estar de vacaciones a la vez',
+  'shift-area':'dos personas del <b>mismo turno y área</b> no pueden estar de vacaciones a la vez',
+  none:'<b>nadie</b> del equipo puede pisarse con otra persona'
+};
+const store = { get:k=>{ try{ return localStorage.getItem(k); }catch(_){ return null; } }, set:(k,v)=>{ try{ v===null?localStorage.removeItem(k):localStorage.setItem(k,v); }catch(_){} } };
+
+// ---------- dates ----------
+const pd = s => { if(!s) return null; const [y,m,d]=s.split('-').map(Number); return new Date(Date.UTC(y,m-1,d)); };
+const fd = d => d.toISOString().slice(0,10);
+const addDays = (s,n) => { const d=pd(s); d.setUTCDate(d.getUTCDate()+n); return fd(d); };
+const daysBetween = (a,b) => Math.round((pd(b)-pd(a))/86400000)+1;
+const fmt = s => s ? s.slice(8,10)+'/'+s.slice(5,7) : '—';
+const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const MESES_L = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const fmtL = s => { if(!s) return '—'; const d=pd(s); return d.getUTCDate()+' '+MESES[d.getUTCMonth()]+' '+d.getUTCFullYear(); };
+const fmtTs = iso => { if(!iso) return '—'; const d=new Date(iso); if(isNaN(d)) return '—'; return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
+const overlap = (a,b) => a.from <= b.to && b.from <= a.to;
+const todayStr = () => { const d=new Date(); return fd(new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()))); };
+const slug = n => String(n).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+const norm = n => String(n).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+
+// ---------- state ----------
+const S = {
+  code: store.get('vacx-code')||'', isAdmin:false, ready:false,
+  config:null, team:[], requests:[], overrides:{}, results:null,
+  tab:'pedido', myPerson: store.get('vacx-who')||null, cfgDirty:false, cfgRendered:'', importPlan:null, saving:false, pollT:null
+};
+let toastT;
+const toast = m => { let t=$('.toast'); if(!t){ t=document.createElement('div'); t.className='toast'; document.body.appendChild(t);} t.textContent=m; clearTimeout(toastT); toastT=setTimeout(()=>t.remove(),3600); };
+const teamById = () => { const o={}; S.team.forEach(p=>{ o[p.id]=p; }); return o; };
+const activeTeam = () => S.team.filter(p=>p.active!==false);
+const isOpen = () => !!(S.config && S.config.open !== false && S.team.length);
+const scoresOf = () => { const o={}; S.team.forEach(p=>{ o[p.id]={seniorityDate:p.seniorityDate||'', metric:p.metric}; }); return o; };
+
+// ---------- API ----------
+async function api(payload){
+  if(!API_URL || API_URL.indexOf('script.google.com')<0) throw {code:'no_api'};
+  const res = await fetch(API_URL, {method:'POST', body: JSON.stringify(Object.assign({code:S.code}, payload))});
+  const json = await res.json();
+  if(!json.ok){ throw {code:json.error||'error', message:json.error}; }
+  applyState(json);
+  return json;
+}
+function applyState(st){
+  S.config=st.config||null; S.team=st.team||[]; S.requests=st.requests||[]; S.results=st.results||null; S.overrides=st.overrides||{}; S.isAdmin=!!st.isAdmin; S.ready=true;
+  $('#dot').className='dot live'; $('#conn').textContent='Conectado · '+fmtTs(st.serverTime||new Date().toISOString());
+  renderAll();
+}
+async function refresh(silent){
+  try{ await api({action:'state'}); }
+  catch(e){ if(e.code==='bad_code'){ S.code=''; store.set('vacx-code',null); showGate('La clave no es correcta.'); } else if(e.code==='no_api'){ $('#setup-missing').hidden=false; setOff('Sin conexión al Sheet'); } else { setOff('Sin conexión'); if(!silent) toast('No se pudo conectar con el Sheet. Probá de nuevo en unos segundos.'); } }
+}
+function setOff(msg){ $('#dot').className='dot off'; $('#conn').textContent=msg; }
+function showGate(msg){ $('#gate').hidden=false; $('#app').hidden=true; $('#gate-msg').textContent=msg||''; $('#gate-code').focus(); }
+function schedulePoll(){ clearTimeout(S.pollT); S.pollT=setTimeout(()=>{ if(document.visibilityState==='visible' && S.code) refresh(true); schedulePoll(); }, 45000); }
+
+// ---------- resolution ----------
+function collectItems(){
+  return S.requests.filter(r=>r && r.personId && !r.flexible && r.from && r.to && r.to>=r.from).map(r=>({key:r.id, id:r.id, personId:r.personId, from:r.from, to:r.to, note:r.note||'', createdAt:r.createdAt||'', source:r.source||'self', days:daysBetween(r.from,r.to)}));
+}
+const flexibles = () => S.requests.filter(r=>r && r.flexible);
+const groupKey = (p,rule) => rule==='none' ? 'todos' : rule==='shift-area' ? p.shift+'|'+(p.area||'') : p.shift;
+function critCmp(c, a, b, scores){
+  if(c==='antiguedad'){ const sa=(scores[a.personId]||{}).seniorityDate||'9999-12-31', sb=(scores[b.personId]||{}).seniorityDate||'9999-12-31'; return sa<sb?-1:sa>sb?1:0; }
+  if(c==='metricas'){ const ma=Number((scores[a.personId]||{}).metric), mb=Number((scores[b.personId]||{}).metric); const xa=(isNaN(ma)||(scores[a.personId]||{}).metric==='')?-Infinity:ma, xb=(isNaN(mb)||(scores[b.personId]||{}).metric==='')?-Infinity:mb; return xa>xb?-1:xa<xb?1:0; }
+  const ta=a.createdAt||'9999', tb=b.createdAt||'9999'; return ta<tb?-1:ta>tb?1:0;
+}
+function whyBefore(a, b, criteria, scores){
+  for(const c of criteria){ const r=critCmp(c,a,b,scores); if(r<0) return c==='antiguedad'?'tiene más antigüedad':c==='metricas'?'tiene mejor métrica':'postuló antes'; if(r>0) return 'fue definido por coordinación'; }
+  return 'quedó primero por orden';
+}
+function anyDayOver(it, others, max){ let d=it.from; while(d<=it.to){ let n=0; for(const o of others){ if(o.from<=d && d<=o.to) n++; } if(n>=max) return true; d=addDays(d,1); } return false; }
+function resolve(){
+  const cfg=S.config||{}; const team=teamById(); const scores=scoresOf(); const ov=S.overrides||{};
+  const criteria=(cfg.criteria&&cfg.criteria.length===3)?cfg.criteria:CRIT_KEYS;
+  const items=collectItems().filter(it=>team[it.personId]);
+  items.sort((a,b)=>{ for(const c of criteria){ const r=critCmp(c,a,b,scores); if(r) return r; } return a.key<b.key?-1:1; });
+  const approved=[]; const rule=cfg.rule||'shift'; const max=Math.max(1,Number(cfg.maxSimul)||1); const maxDays=Number(cfg.maxDays)||0; const usedDays={};
+  items.forEach((it,i)=>{
+    const p=team[it.personId]; it.rank=i+1; it.group=groupKey(p,rule); it.person=p;
+    const clashes=approved.filter(o=>o.personId!==it.personId && o.group===it.group && overlap(o,it));
+    const blocked = max<=1 ? clashes.length>0 : anyDayOver(it,clashes,max);
+    const selfClash = approved.some(o=>o.personId===it.personId && overlap(o,it));
+    const overDays = maxDays>0 && ((usedDays[it.personId]||0)+it.days) > maxDays;
+    it.clashes=clashes; it.auto=(blocked||selfClash||overDays)?'rejected':'approved';
+    it.autoReason = selfClash ? 'Se superpone con otro rango tuyo ya aprobado' : overDays ? `Supera el tope de ${maxDays} días por persona` : blocked ? 'Se pisa con '+clashes.map(c=>`${c.person.name} (${fmt(c.from)}–${fmt(c.to)}), que ${whyBefore(c,it,criteria,scores)}`).join('; ') : '';
+    const o=ov[it.key]; it.overridden = o==='approved'||o==='rejected'; it.status = it.overridden ? o : it.auto;
+    if(it.status==='approved'){ approved.push(it); usedDays[it.personId]=(usedDays[it.personId]||0)+it.days; }
+  });
+  return items;
+}
+function publishedStatus(it){ const r=S.results; if(!r||!Array.isArray(r.items)) return null; return r.items.find(x=>x.personId===it.personId && x.from===it.from && x.to===it.to) || null; }
+
+// ---------- render ----------
+function renderAll(){
+  if(!S.ready) return;
+  $('#gate').hidden=true; $('#app').hidden=false;
+  renderHeader(); renderTabs(); renderPedido(); renderCalendario();
+  if(S.isAdmin){ renderAsignacion(); renderConfig(); }
+}
+function renderHeader(){
+  const cfg=S.config||{};
+  $('#title').textContent = cfg.title || 'Vacaciones';
+  $('#subtitle').textContent = cfg.periodStart && cfg.periodEnd ? `Período ${fmtL(cfg.periodStart)} – ${fmtL(cfg.periodEnd)} · ${isOpen()?'Postulación abierta':'Postulación cerrada'}` : 'Postulación de fechas y asignación por prioridad';
+  $('#role-chip').innerHTML = S.isAdmin ? '<span class="chip neutral">Coordinación</span>' : '';
+  $('#btn-admin').hidden = S.isAdmin || !S.code; $('#btn-logout').hidden = !S.code;
+}
+function renderTabs(){
+  if(!S.isAdmin && (S.tab==='asignacion'||S.tab==='config')) S.tab='pedido';
+  $$('#tabs [data-tab]').forEach(b=>{ const t=b.dataset.tab; if(t==='asignacion'||t==='config') b.hidden=!S.isAdmin; b.setAttribute('aria-selected', String(t===S.tab)); $('#tab-'+t).hidden = t!==S.tab; });
+  $('#c-cal').textContent = collectItems().length;
+  if(S.isAdmin) $('#c-asig').textContent = resolve().filter(i=>i.status==='rejected').length;
+}
+function fillWho(sel, includeEmpty){
+  const cur=sel.value; sel.innerHTML = (includeEmpty?'<option value="">Elegí tu nombre…</option>':'') + ['am','pm'].map(sh=>`<optgroup label="Turno ${SHIFT[sh]}">`+activeTeam().filter(p=>p.shift===sh).map(p=>`<option value="${esc(p.id)}">${esc(p.name)} · ${esc(p.area||'')}</option>`).join('')+'</optgroup>').join('');
+  if(cur && $$('option',sel).some(o=>o.value===cur)) sel.value=cur;
+}
+function syncFlexUI(){ const fx=$('#flex').checked; $('#l-from').hidden=fx; $('#l-to').hidden=fx; $('#add-range').textContent = fx ? 'Marcarme sin fechas' : 'Agregar rango'; $('#note-label').textContent = fx ? 'Preferencias (opcional): ¿alguna idea de mes, o cosas a evitar?' : 'Comentario (opcional)'; $('#note').placeholder = fx ? 'Ej: probablemente febrero, o me adapto a lo que quede libre' : 'Ej: viaje ya reservado, casamiento, etc.'; }
+function renderPedido(){
+  const cfg=S.config||{};
+  const who=$('#who'); fillWho(who,true);
+  if(S.myPerson && !who.value) who.value=S.myPerson;
+  const blocked=$('#pedido-blocked'); const form=$('#pedido-form');
+  let msg='';
+  if(!S.team.length) msg='La postulación todavía no está configurada. Cuando esté lista vas a poder cargar tus fechas acá.';
+  else if(cfg.open===false) msg='La postulación está cerrada. Si necesitás cambiar algo, hablá con coordinación.';
+  blocked.hidden=!msg; blocked.textContent=msg; form.hidden=!!msg;
+  const criteria=(cfg.criteria&&cfg.criteria.length===3)?cfg.criteria:CRIT_KEYS;
+  $('#rules-text').innerHTML = `<p>Regla: ${RULE_TXT[cfg.rule||'shift']}${(Number(cfg.maxSimul)||1)>1?` (hasta ${cfg.maxSimul} a la vez)`:''}.</p>
+    <p style="margin-top:6px">Si dos pedidos se pisan, tiene prioridad quien va primero en: <b>${criteria.map(c=>CRIT[c]).join(' → ')}</b>.</p>
+    ${Number(cfg.maxDays)>0?`<p style="margin-top:6px">Tope: ${cfg.maxDays} días corridos por persona.</p>`:''}
+    ${cfg.note?`<p style="margin-top:6px">${esc(cfg.note)}</p>`:''}
+    ${cfg.periodStart?`<p style="margin-top:6px" class="muted">Las fechas tienen que caer entre el ${fmtL(cfg.periodStart)} y el ${fmtL(cfg.periodEnd)}.</p>`:''}
+    <p style="margin-top:6px" class="muted">Si todavía no sabés qué fechas querés, marcá "no tengo fechas definidas": coordinación te va a ubicar en lo que quede libre.</p>`;
+  $('#from').min=$('#to').min=cfg.periodStart||''; $('#from').max=$('#to').max=cfg.periodEnd||'';
+  syncFlexUI();
+  const team=teamById(); const pid=who.value;
+  const mine = collectItems().filter(it=>pid && it.personId===pid);
+  const myFlex = pid ? flexibles().find(r=>r.personId===pid) : null;
+  const list=$('#my-list'); const lead=$('#my-lead');
+  const pName = pid && team[pid] ? team[pid].name : '';
+  $('#my-title').textContent = pName ? `Rangos de ${pName}` : 'Tus rangos';
+  const canDel = isOpen() || S.isAdmin;
+  if(!mine.length && !myFlex){ list.innerHTML=''; lead.textContent = pName ? 'Todavía no hay rangos cargados.' : 'Elegí tu nombre para ver tus rangos.'; }
+  else {
+    lead.textContent = myFlex ? 'Estás marcado como sin fechas definidas.' : `${mine.length} rango${mine.length>1?'s':''} · ${mine.reduce((a,b)=>a+b.days,0)} días corridos en total.`;
+    let html='';
+    if(myFlex) html += `<div class="req"><div class="dates">Sin fechas definidas</div><div><span class="chip warn">A definir con coordinación</span>${myFlex.note?`<div class="meta">${esc(myFlex.note)}</div>`:''}</div><div>${canDel?`<button class="btn xs danger" data-del="${esc(myFlex.id)}|${esc(pid)}">Quitar</button>`:''}</div></div>`;
+    html += mine.sort((a,b)=>a.from<b.from?-1:1).map(it=>{
+      const ps=publishedStatus(it);
+      const chip = ps ? (ps.status==='approved'?'<span class="chip ok">Aprobado</span>':'<span class="chip bad">No aprobado</span>') : '<span class="chip pend">Pendiente de asignación</span>';
+      return `<div class="req"><div class="dates num">${fmt(it.from)} – ${fmt(it.to)}</div><div><div>${chip} <span class="meta num">${it.days} días</span>${it.source!=='self'?' <span class="chip neutral">cargado por coordinación</span>':''}</div>${it.note?`<div class="meta">${esc(it.note)}</div>`:''}${ps&&ps.status==='rejected'&&ps.reason?`<div class="meta">${esc(ps.reason)}</div>`:''}</div><div>${canDel?`<button class="btn xs danger" data-del="${esc(it.id)}|${esc(pid)}">Quitar</button>`:''}</div></div>`;
+    }).join('');
+    list.innerHTML=html;
+  }
+  const rc=$('#result-card'); const pubs = mine.map(publishedStatus).filter(Boolean);
+  rc.hidden = !S.results || !mine.length;
+  if(!rc.hidden){
+    const ok=pubs.filter(p=>p.status==='approved');
+    $('#my-results').innerHTML = `<p class="small muted">Publicado el ${fmtTs(S.results.publishedAt)}.</p>` + (pubs.length? ok.length? `<div class="notice ok">Tenés aprobado: ${ok.map(p=>`<b class="num">${fmt(p.from)} – ${fmt(p.to)}</b>`).join(', ')}.</div>` : `<div class="notice bad">Ninguno de tus rangos quedó aprobado. Podés cargar otro rango en fechas libres.</div>` : `<div class="notice warn">Tus rangos actuales todavía no están en la última publicación.</div>`);
+  }
+  $('#days-hint').textContent = ($('#from').value && $('#to').value && $('#to').value>=$('#from').value) ? daysBetween($('#from').value,$('#to').value)+' días' : '';
+}
+
+function renderCalendario(){
+  const cfg=S.config||{}; const team=teamById(); const items=collectItems().filter(it=>team[it.personId]);
+  const shiftF=$('#cal-shift').value;
+  let start=cfg.periodStart, end=cfg.periodEnd;
+  if(!start||!end){ if(items.length){ start=items.reduce((a,b)=>a<b.from?a:b.from, items[0].from); end=items.reduce((a,b)=>a>b.to?a:b.to, items[0].to); start=addDays(start,-7); end=addDays(end,7);} }
+  const tl=$('#timeline'); const fx=flexibles().filter(r=>team[r.personId]);
+  $('#cal-flex').textContent = fx.length ? 'Sin fechas definidas todavía: '+fx.map(r=>team[r.personId].name).join(', ')+'.' : '';
+  if(!start||!end){ tl.innerHTML='<div class="empty">Todavía no hay período definido ni pedidos cargados.</div>'; $('#cal-sub').textContent=''; return; }
+  const n=daysBetween(start,end); if(n<1||n>400){ tl.innerHTML='<div class="empty">El período es demasiado largo para mostrarlo (máx. 400 días).</div>'; return; }
+  const today=todayStr();
+  const resolved = S.isAdmin ? resolve() : null;
+  const statusOf = it => { if(S.isAdmin){ const r=resolved.find(x=>x.key===it.key); return r?{status:r.status, ovr:r.overridden, reason:r.autoReason}:{status:'pend'}; } const ps=publishedStatus(it); return ps?{status:ps.status, reason:ps.reason}:{status:'pend'}; };
+  $('#cal-sub').textContent = `${fmtL(start)} – ${fmtL(end)} · ${items.length} pedido${items.length!==1?'s':''} de ${new Set(items.map(i=>i.personId)).size} personas`;
+  let days=''; let d=start, col=1; const monthSpans=[]; let curM=null;
+  while(d<=end){ const dt=pd(d); const m=dt.getUTCMonth()+'-'+dt.getUTCFullYear(); if(m!==curM){ monthSpans.push({label:MESES_L[dt.getUTCMonth()]+' '+dt.getUTCFullYear(), start:col, n:0}); curM=m; } monthSpans[monthSpans.length-1].n++;
+    const dow=dt.getUTCDay(); const we=dow===0||dow===6; const mo=dow===1;
+    days += `<div class="d${we?' we':''}${mo?' mo':''}${d===today?' today':''}" style="grid-column:${col}">${mo?fmt(d):''}</div>`;
+    d=addDays(d,1); col++; }
+  const months = monthSpans.map(m=>`<div class="d" style="grid-column:${m.start} / span ${m.n}">${m.n>=3?m.label:''}</div>`).join('');
+  const cells = () => { let h=''; let dd=start; for(let c=1;c<=n;c++){ const dt=pd(dd); const dow=dt.getUTCDay(); h+=`<div class="d${(dow===0||dow===6)?' we':''}${dow===1?' mo':''}${dd===today?' today':''}" style="grid-column:${c}"></div>`; dd=addDays(dd,1);} return h; };
+  const colOf = s => Math.min(Math.max(daysBetween(start,s),1),n);
+  const gtc = `style="grid-template-columns:repeat(${n},var(--day))"`;
+  let html = `<div class="tl-inner tl-head tl-months"><div class="tl-label"></div><div class="tl-cells" ${gtc}>${months}</div></div><div class="tl-inner tl-head tl-days"><div class="tl-label"></div><div class="tl-cells" ${gtc}>${days}</div></div>`;
+  const shifts = shiftF ? [shiftF] : ['am','pm'];
+  shifts.forEach(sh=>{
+    const people=activeTeam().filter(p=>p.shift===sh); if(!people.length) return;
+    html += `<div class="tl-inner tl-group"><div class="tl-label"><span class="chip ${sh}">${SHIFT[sh]}</span></div><div class="tl-cells" ${gtc}></div></div>`;
+    Array.from(new Set(people.map(p=>p.area||''))).sort().forEach(ar=>{
+      people.filter(p=>(p.area||'')===ar).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p=>{
+        const its=items.filter(i=>i.personId===p.id); const isFlex=fx.some(r=>r.personId===p.id);
+        const bars = its.map(it=>{ const st=statusOf(it); const s=it.from<start?1:colOf(it.from); const e=it.to>end?n:colOf(it.to); const tip=`${p.name}: ${fmtL(it.from)} – ${fmtL(it.to)} (${it.days} días)${st.reason?'\n'+st.reason:''}${it.note?'\n'+it.note:''}`; return `<div class="bar ${st.status}${st.ovr?' ovr':''}" style="grid-column:${s} / ${e+1}" title="${esc(tip)}">${it.days>=4?`${fmt(it.from)}–${fmt(it.to)}`:''}</div>`; }).join('');
+        html += `<div class="tl-inner"><div class="tl-label"><span class="nm">${esc(p.name)}</span>${isFlex?'<span class="chip warn" style="font-size:10px">sin fechas</span>':''}<span class="ar">${esc(p.area||'')}</span></div><div class="tl-cells" ${gtc}>${cells()}${bars}</div></div>`;
+      });
+    });
+  });
+  tl.innerHTML=html;
+}
+
+function renderAsignacion(){
+  const items=resolve(); const scores=scoresOf(); const people=activeTeam();
+  const fx=flexibles(); const postulated=new Set(items.map(i=>i.personId).concat(fx.map(r=>r.personId)));
+  const rej=items.filter(i=>i.status==='rejected').length;
+  const lastChange = S.requests.reduce((a,r)=>(r.createdAt&&r.createdAt>a)?r.createdAt:a,'');
+  const stale = !S.results || (lastChange && S.results.publishedAt < lastChange);
+  const noSen = people.filter(p=>!scores[p.id]||!scores[p.id].seniorityDate).length;
+  $('#tiles').innerHTML = `
+    <div class="tile"><div class="v num">${items.length}</div><div class="l">pedidos con fechas</div></div>
+    <div class="tile"><div class="v num">${postulated.size}<span class="muted" style="font-size:15px;font-weight:500"> / ${people.length}</span></div><div class="l">personas respondieron</div></div>
+    <div class="tile ${rej?'bad':'ok'}"><div class="v num">${rej}</div><div class="l">no aprobados por solapamiento</div></div>
+    <div class="tile ${fx.length?'warn':''}"><div class="v num">${fx.length}</div><div class="l">sin fechas definidas</div></div>
+    <div class="tile ${noSen?'warn':''}"><div class="v num">${noSen}</div><div class="l">sin fecha de ingreso cargada</div></div>`;
+  $('#btn-toggle-open').textContent = isOpen() ? 'Cerrar postulación' : 'Abrir postulación';
+  $('#btn-publish').disabled = !items.length;
+  const ps=$('#publish-state');
+  if(!S.results){ ps.className='notice warn small'; ps.textContent='Todavía no publicaste ninguna asignación: el equipo ve sus pedidos como pendientes.'; }
+  else if(stale){ ps.className='notice warn small'; ps.textContent=`Última publicación: ${fmtTs(S.results.publishedAt)}. Hubo pedidos nuevos después; el equipo está viendo una versión vieja.`; }
+  else { ps.className='notice ok small'; ps.textContent=`Publicado el ${fmtTs(S.results.publishedAt)}. El equipo ve el resultado de esta tabla (si cambiaste forzados, volvé a publicar).`; }
+  const missing=people.filter(p=>!postulated.has(p.id));
+  const t=$('#asig-table');
+  if(!items.length){ t.innerHTML=`<tbody><tr><td class="empty">Todavía no hay pedidos con fechas. Podés cargarlos a mano o importarlos del Form más abajo.</td></tr></tbody>`; }
+  else t.innerHTML = `<thead><tr><th>#</th><th>Persona</th><th>Turno / área</th><th>Ingreso</th><th>Métrica</th><th>Fechas</th><th>Días</th><th>Postuló</th><th>Estado</th><th>Motivo</th><th></th></tr></thead><tbody>` +
+    items.map(it=>{ const sc=scores[it.personId]||{}; const st=it.status;
+      const chip = st==='approved' ? `<span class="chip ok${it.overridden?' ovr':''}">Aprobado${it.overridden?' · forzado':''}</span>` : `<span class="chip bad${it.overridden?' ovr':''}">No aprobado${it.overridden?' · forzado':''}</span>`;
+      return `<tr class="${st==='rejected'?'rej':''}"><td class="num">${it.rank}</td><td class="who">${esc(it.person.name)}</td><td><span class="chip ${it.person.shift}">${SHIFT[it.person.shift]}</span> <span class="small muted">${esc(it.person.area||'')}</span></td><td class="num">${sc.seniorityDate?fmtL(sc.seniorityDate):'<span class="chip warn">falta</span>'}</td><td class="num">${sc.metric!==undefined&&sc.metric!==''&&sc.metric!==null?esc(sc.metric):'<span class="muted">—</span>'}</td><td class="num" style="white-space:nowrap">${fmt(it.from)} – ${fmt(it.to)}${it.note?`<div class="small muted">${esc(it.note)}</div>`:''}</td><td class="num">${it.days}</td><td class="num small">${fmtTs(it.createdAt)}${it.source!=='self'?`<div class="muted">${it.source==='import'?'importado':'manual'}</div>`:''}</td><td>${chip}</td><td class="reason">${it.overridden && it.auto!==st ? `Automático daría: ${it.auto==='approved'?'aprobado':'no aprobado'}. ` : ''}${esc(it.autoReason)}</td>
+      <td class="actions">${st!=='approved'?`<button class="btn xs" data-ovr="${esc(it.key)}|approved">Aprobar</button>`:''}${st!=='rejected'?`<button class="btn xs" data-ovr="${esc(it.key)}|rejected">Rechazar</button>`:''}${it.overridden?`<button class="btn xs ghost" data-ovr="${esc(it.key)}|auto">Auto</button>`:''} <button class="btn xs ghost danger" data-del="${esc(it.id)}|" title="Quitar el pedido">✕</button></td></tr>`; }).join('') +
+    `</tbody>` + (missing.length?`<tfoot><tr><td colspan="11" class="small muted">Sin responder todavía: ${missing.map(p=>esc(p.name)).join(', ')}.</td></tr></tfoot>`:'');
+  const fl=$('#flex-list'); const team=teamById();
+  fl.hidden=!fx.length;
+  if(fx.length) fl.innerHTML = `<h3>Sin fechas definidas</h3><p class="small muted" style="margin:6px 0 10px">Estas personas prefieren que las ubiques en lo que quede libre. Cuando definan fechas, cargalas acá abajo a su nombre.</p><div class="stack">`+fx.filter(r=>team[r.personId]).map(r=>`<div class="req"><div class="dates">${esc(team[r.personId].name)}</div><div><span class="chip ${team[r.personId].shift}">${SHIFT[team[r.personId].shift]}</span> <span class="small muted">${esc(team[r.personId].area||'')}</span>${r.note?`<div class="meta">${esc(r.note)}</div>`:''}<div class="meta">Respondió ${fmtTs(r.createdAt)}</div></div><div><button class="btn xs ghost danger" data-del="${esc(r.id)}|">Quitar</button></div></div>`).join('')+'</div>';
+  fillWho($('#m-who'),false);
+}
+
+function renderConfig(){
+  const cfg=S.config||{}; const sig=JSON.stringify([cfg,S.team]);
+  if(S.cfgDirty){ $('#cf-dirty').textContent = sig!==S.cfgRendered ? 'Tenés cambios sin guardar (y hubo cambios remotos: al guardar los pisás).' : 'Tenés cambios sin guardar.'; return; }
+  if(sig===S.cfgRendered) return;
+  S.cfgRendered=sig; $('#cf-dirty').textContent='';
+  $('#cf-title').value=cfg.title||''; $('#cf-start').value=cfg.periodStart||''; $('#cf-end').value=cfg.periodEnd||''; $('#cf-rule').value=cfg.rule||'shift';
+  $('#cf-max').value=cfg.maxSimul||1; $('#cf-maxdays').value=cfg.maxDays||0; $('#cf-note').value=cfg.note||'';
+  const crit=(cfg.criteria&&cfg.criteria.length===3)?cfg.criteria:CRIT_KEYS;
+  ['#cf-c1','#cf-c2','#cf-c3'].forEach((id,i)=>{ const s=$(id); s.innerHTML=CRIT_KEYS.map(k=>`<option value="${k}">${CRIT[k]}</option>`).join(''); s.value=crit[i]; });
+  $('#team-table').innerHTML = `<thead><tr><th>Nombre</th><th>Turno</th><th>Área</th><th>Fecha de ingreso</th><th>Métrica</th><th>Activo</th><th></th></tr></thead><tbody>` +
+    S.team.map(p=>`<tr data-id="${esc(p.id)}"><td><input type="text" class="t-name" value="${esc(p.name)}"></td><td><select class="t-shift"><option value="am"${p.shift==='am'?' selected':''}>Mañana</option><option value="pm"${p.shift==='pm'?' selected':''}>Tarde</option></select></td><td><input type="text" class="t-area" value="${esc(p.area||'')}" list="areas"></td><td><input type="date" class="t-sen" value="${esc(p.seniorityDate||'')}"></td><td><input type="number" step="any" class="t-met" value="${p.metric===undefined||p.metric===null?'':esc(p.metric)}"></td><td><input type="checkbox" class="t-act"${p.active!==false?' checked':''}></td><td><button class="btn xs ghost danger t-del" title="Quitar">✕</button></td></tr>`).join('') + `</tbody>` +
+    `<datalist id="areas">${Array.from(new Set(S.team.map(p=>p.area).filter(Boolean))).map(a=>`<option value="${esc(a)}">`).join('')}</datalist>`;
+}
+function readConfigForm(){
+  const team=[]; $$('#team-table tbody tr').forEach(r=>{ const name=$('.t-name',r).value.trim(); if(!name) return; const id=r.dataset.id||slug(name)||('p'+Date.now());
+    const met=$('.t-met',r).value; team.push({id, name, shift:$('.t-shift',r).value, area:$('.t-area',r).value.trim(), active:$('.t-act',r).checked, seniorityDate:$('.t-sen',r).value||'', metric: met===''?'':Number(met)}); });
+  const crit=[$('#cf-c1').value,$('#cf-c2').value,$('#cf-c3').value]; const critOk=new Set(crit).size===3;
+  const cfg={title:$('#cf-title').value.trim(), periodStart:$('#cf-start').value, periodEnd:$('#cf-end').value, rule:$('#cf-rule').value, maxSimul:Math.max(1,Number($('#cf-max').value)||1), maxDays:Math.max(0,Number($('#cf-maxdays').value)||0), criteria:critOk?crit:CRIT_KEYS, note:$('#cf-note').value.trim()};
+  return {cfg, team, critOk};
+}
+
+// ---------- writes ----------
+async function guard(fn){ if(S.saving){ toast('Esperá, guardando…'); return; } S.saving=true; document.body.style.cursor='progress'; try{ await fn(); } catch(e){ console.error(e); toast(e&&e.code==='admin_only'?'Solo coordinación puede hacer eso.':e&&e.code==='bad_code'?'La clave ya no es válida. Volvé a entrar.':(e&&e.message)?e.message:'No se pudo guardar. Probá de nuevo.'); if(e&&e.code==='bad_code'){ S.code=''; store.set('vacx-code',null); showGate(); } } finally{ S.saving=false; document.body.style.cursor=''; } }
+function validRange(from,to,cfg){
+  if(!from||!to) return 'Completá desde y hasta.'; if(to<from) return 'La fecha "hasta" tiene que ser posterior a "desde".';
+  if(cfg.periodStart && from<cfg.periodStart) return `El período empieza el ${fmtL(cfg.periodStart)}.`; if(cfg.periodEnd && to>cfg.periodEnd) return `El período termina el ${fmtL(cfg.periodEnd)}.`;
+  if(daysBetween(from,to)>90) return 'Un rango no puede superar 90 días.'; return '';
+}
+
+// ---------- events ----------
+$('#gate-go').addEventListener('click', ()=>{ const c=$('#gate-code').value.trim(); if(!c) return; S.code=c; store.set('vacx-code',c); $('#gate-msg').textContent='Entrando…'; refresh(); });
+$('#gate-code').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#gate-go').click(); });
+$('#btn-admin').addEventListener('click', ()=>{ const c=window.prompt('Clave de coordinación:'); if(!c) return; const prev=S.code; S.code=c.trim(); guard(async()=>{ try{ const st=await api({action:'state'}); if(!st.isAdmin){ S.code=prev; toast('Esa clave no es de coordinación.'); await api({action:'state'}); return; } store.set('vacx-code',S.code); toast('Modo coordinación activado.'); } catch(e){ S.code=prev; throw e; } }); });
+$('#btn-logout').addEventListener('click', ()=>{ S.code=''; S.isAdmin=false; S.ready=false; store.set('vacx-code',null); showGate('Saliste. Volvé a ingresar la clave para entrar.'); });
+$('#tabs').addEventListener('click', e=>{ const b=e.target.closest('[data-tab]'); if(!b) return; S.tab=b.dataset.tab; renderTabs(); if(S.tab==='calendario') renderCalendario(); });
+$('#cal-shift').addEventListener('change', renderCalendario);
+$('#flex').addEventListener('change', syncFlexUI);
+['#from','#to'].forEach(id=>$(id).addEventListener('change', ()=>{ if($('#from').value && !$('#to').value) $('#to').value=addDays($('#from').value,13); $('#days-hint').textContent = ($('#from').value && $('#to').value && $('#to').value>=$('#from').value) ? daysBetween($('#from').value,$('#to').value)+' días' : ''; }));
+$('#who').addEventListener('change', ()=>{ S.myPerson=$('#who').value; store.set('vacx-who', S.myPerson); renderPedido(); });
+$('#add-range').addEventListener('click', ()=>guard(async()=>{
+  const cfg=S.config||{}; const personId=$('#who').value; if(!personId){ toast('Elegí tu nombre primero.'); return; }
+  const note=$('#note').value.trim();
+  if($('#flex').checked){ await api({action:'setFlexible', personId, note}); $('#note').value=''; $('#flex').checked=false; syncFlexUI(); toast('Listo, quedaste como sin fechas definidas.'); return; }
+  const from=$('#from').value,to=$('#to').value; const err=validRange(from,to,cfg); if(err){ toast(err); return; }
+  if(collectItems().filter(it=>it.personId===personId).some(it=>overlap(it,{from,to}))){ toast('Ese rango se pisa con otro tuyo ya cargado.'); return; }
+  await api({action:'addRange', personId, from, to, note, source:'self'});
+  $('#from').value=$('#to').value=$('#note').value=''; $('#days-hint').textContent=''; toast('Rango cargado.');
+}));
+document.addEventListener('click', e=>{
+  const d=e.target.closest('[data-del]'); if(d){ const [id,personId]=d.dataset.del.split('|');
+    if(d.dataset.armed!=='1'){ d.dataset.armed='1'; d.dataset.label=d.textContent; d.textContent='¿Seguro? Quitar'; setTimeout(()=>{ if(d.isConnected){ d.dataset.armed=''; d.textContent=d.dataset.label; } },4000); return; }
+    guard(async()=>{ await api({action: S.isAdmin?'adminRemove':'removeRange', id, personId}); toast('Quitado.'); }); return; }
+  const o=e.target.closest('[data-ovr]'); if(o){ const [key,val]=o.dataset.ovr.split('|'); guard(()=>api({action:'override', key, status: val==='auto'?'':val})); return; }
+});
+$('#btn-toggle-open').addEventListener('click', ()=>guard(async()=>{ const open=!isOpen(); await api({action:'setOpen', open}); toast(open?'Postulación abierta.':'Postulación cerrada.'); }));
+$('#btn-publish').addEventListener('click', ()=>guard(async()=>{
+  const items=resolve().map(it=>({personId:it.personId, from:it.from, to:it.to, status:it.status, reason: it.status==='rejected' ? (it.overridden && !it.autoReason ? 'Definido por coordinación' : it.autoReason) : ''}));
+  await api({action:'publish', items}); toast('Asignación publicada. El equipo ya la ve.');
+}));
+$('#m-add').addEventListener('click', ()=>guard(async()=>{
+  const personId=$('#m-who').value; const from=$('#m-from').value,to=$('#m-to').value; const err=validRange(from,to,S.config||{}); if(!personId){ toast('Elegí la persona.'); return; } if(err){ toast(err); return; }
+  await api({action:'addRange', personId, from, to, note:$('#m-note').value.trim(), source:'manual'});
+  $('#m-from').value=$('#m-to').value=$('#m-note').value=''; toast('Pedido cargado.');
+}));
+$('#m-flex').addEventListener('click', ()=>guard(async()=>{ const personId=$('#m-who').value; if(!personId){ toast('Elegí la persona.'); return; } await api({action:'setFlexible', personId, note:$('#m-note').value.trim(), source:'manual'}); $('#m-note').value=''; toast('Marcado como sin fechas definidas.'); }));
+// import
+function parseDate(s){ s=s.trim(); let m; if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`; if((m=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/))){ let y=m[3]; if(y.length===2) y='20'+y; return `${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`; } return null; }
+function matchPerson(name){ const n=norm(name); const team=activeTeam(); let hit=team.find(p=>norm(p.name)===n); if(hit) return hit; let hits=team.filter(p=>norm(p.name).includes(n)||n.includes(norm(p.name))); if(hits.length===1) return hits[0]; const first=n.split(/\s+/)[0]; hits=team.filter(p=>norm(p.name).split(/\s+/)[0]===first); return hits.length===1?hits[0]:null; }
+$('#imp-preview').addEventListener('click', ()=>{
+  const lines=$('#imp-text').value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean); const plan=[]; const out=[];
+  lines.forEach((line,i)=>{ const cells=line.split(/\t|;|,(?=\s*[^\d\s])|,(?=\s*\d{1,2}[\/.-])/).map(c=>c.trim()).filter(Boolean); const dates=[]; let name=null;
+    if(cells.length && /^(nombre|name|marca temporal|timestamp)/i.test(cells[0])) return;
+    cells.forEach(c=>{ const d=parseDate(c); if(d && dates.length<2 && !/\d{1,2}:\d{2}/.test(c)) dates.push(d); else if(!name && /[a-záéíóúñ]/i.test(c) && !/\d{1,2}:\d{2}/.test(c)) name=c; });
+    const p=name?matchPerson(name):null;
+    if(!p||dates.length<2||dates[1]<dates[0]){ out.push(`<div class="notice bad">Línea ${i+1}: ${esc(line.slice(0,80))} → ${!name?'sin nombre':!p?`no reconozco a "${esc(name)}"`:'faltan fechas válidas'}</div>`); return; }
+    plan.push({personId:p.id, from:dates[0], to:dates[1], note:''}); out.push(`<div class="notice ok">${esc(p.name)}: ${fmt(dates[0])} – ${fmt(dates[1])} (${daysBetween(dates[0],dates[1])} días)</div>`);
+  });
+  S.importPlan=plan; $('#imp-out').innerHTML=out.join('')||'<span class="muted">Nada para importar.</span>'; $('#imp-commit').hidden=!plan.length; $('#imp-n').textContent=plan.length?`(${plan.length})`:'';
+});
+$('#imp-commit').addEventListener('click', ()=>guard(async()=>{ const rows=S.importPlan||[]; await api({action:'import', rows}); S.importPlan=null; $('#imp-text').value=''; $('#imp-out').innerHTML=''; $('#imp-commit').hidden=true; toast(`Importados ${rows.length} pedidos.`); }));
+// config
+$('#tab-config').addEventListener('input', e=>{ if(e.target.closest('input,select')){ S.cfgDirty=true; $('#cf-dirty').textContent='Tenés cambios sin guardar.'; } });
+$('#team-table').addEventListener('click', e=>{ const b=e.target.closest('.t-del'); if(b){ b.closest('tr').remove(); S.cfgDirty=true; $('#cf-dirty').textContent='Tenés cambios sin guardar.'; } });
+$('#cf-add-person').addEventListener('click', ()=>{ let tb=$('#team-table tbody'); if(!tb){ $('#team-table').innerHTML='<thead><tr><th>Nombre</th><th>Turno</th><th>Área</th><th>Fecha de ingreso</th><th>Métrica</th><th>Activo</th><th></th></tr></thead><tbody></tbody>'; tb=$('#team-table tbody'); }
+  const tr=document.createElement('tr'); tr.dataset.id=''; tr.innerHTML=`<td><input type="text" class="t-name" placeholder="Nombre"></td><td><select class="t-shift"><option value="am">Mañana</option><option value="pm">Tarde</option></select></td><td><input type="text" class="t-area" list="areas"></td><td><input type="date" class="t-sen"></td><td><input type="number" step="any" class="t-met"></td><td><input type="checkbox" class="t-act" checked></td><td><button class="btn xs ghost danger t-del">✕</button></td>`; tb.appendChild(tr); $('.t-name',tr).focus(); S.cfgDirty=true; });
+$('#cf-discard').addEventListener('click', ()=>{ S.cfgDirty=false; S.cfgRendered=''; renderConfig(); });
+$('#cf-save').addEventListener('click', ()=>guard(async()=>{
+  const {cfg,team,critOk}=readConfigForm(); if(!critOk){ toast('Los tres criterios de desempate tienen que ser distintos.'); return; }
+  if(cfg.periodStart && cfg.periodEnd && cfg.periodEnd<cfg.periodStart){ toast('El período termina antes de empezar.'); return; }
+  const ids=team.map(p=>p.id); if(new Set(ids).size!==ids.length){ toast('Hay dos personas con el mismo nombre; diferencialas (ej. apellido).'); return; }
+  await api({action:'saveConfig', config:cfg}); await api({action:'saveTeam', team});
+  S.cfgDirty=false; S.cfgRendered=''; renderConfig(); toast('Guardado.');
+}));
+
+// ---------- boot ----------
+if(!API_URL || API_URL.indexOf('script.google.com')<0){ $('#setup-missing').hidden=false; setOff('Sin configurar'); }
+else if(!S.code){ showGate(); setOff('Sin conectar'); }
+else { refresh(); }
+schedulePoll();
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible' && S.code && S.ready) refresh(true); });
+})();
+</script>
+
+</body>
+</html>
