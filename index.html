@@ -232,7 +232,7 @@ tbody tr:first-child td{border-top:0}
     <div class="stack">
       <div class="card" id="pedido-card">
         <h2>Postulá tus fechas</h2>
-        <p class="lead">Elegí tu nombre y cargá hasta tres opciones, en orden de preferencia. Podés volver a entrar y cambiarlas mientras la postulación esté abierta.</p>
+        <p class="lead">Elegí tu nombre y cargá hasta tres opciones, en orden de preferencia. Podés volver a entrar y cambiarlas mientras la postulación esté abierta. Tu pedido lo ve solo coordinación.</p>
         <div id="pedido-blocked" class="notice warn" hidden></div>
         <div class="stack" id="pedido-form">
           <label class="f"><span>¿Quién sos?</span><select id="who"></select></label>
@@ -423,7 +423,7 @@ const scoresOf = () => { const o={}; S.team.forEach(p=>{ o[p.id]={seniorityDate:
 // ---------- API ----------
 async function api(payload){
   if(!API_URL || API_URL.indexOf('script.google.com')<0) throw {code:'no_api'};
-  const res = await fetch(API_URL, {method:'POST', body: JSON.stringify(Object.assign({code:S.code}, payload))});
+  const res = await fetch(API_URL, {method:'POST', body: JSON.stringify(Object.assign({code:S.code, personId:S.myPerson||''}, payload))});
   const json = await res.json();
   if(!json.ok){ throw {code:json.error||'error', message:json.error}; }
   applyState(json);
@@ -495,8 +495,8 @@ function publishedStatus(it){ const r=S.results; if(!r||!Array.isArray(r.items))
 function renderAll(){
   if(!S.ready) return;
   $('#gate').hidden=true; $('#app').hidden=false;
-  renderHeader(); renderTabs(); renderPedido(); renderCalendario();
-  if(S.isAdmin){ renderAsignacion(); renderConfig(); }
+  renderHeader(); renderTabs(); renderPedido();
+  if(S.isAdmin){ renderCalendario(); renderAsignacion(); renderConfig(); }
 }
 function renderHeader(){
   const cfg=S.config||{};
@@ -506,8 +506,8 @@ function renderHeader(){
   $('#btn-admin').hidden = S.isAdmin || !S.code; $('#btn-logout').hidden = !S.code;
 }
 function renderTabs(){
-  if(!S.isAdmin && (S.tab==='asignacion'||S.tab==='config')) S.tab='pedido';
-  $$('#tabs [data-tab]').forEach(b=>{ const t=b.dataset.tab; if(t==='asignacion'||t==='config') b.hidden=!S.isAdmin; b.setAttribute('aria-selected', String(t===S.tab)); $('#tab-'+t).hidden = t!==S.tab; });
+  if(!S.isAdmin && S.tab!=='pedido') S.tab='pedido';
+  $$('#tabs [data-tab]').forEach(b=>{ const t=b.dataset.tab; if(t==='asignacion'||t==='config'||t==='calendario') b.hidden=!S.isAdmin; b.setAttribute('aria-selected', String(t===S.tab)); $('#tab-'+t).hidden = t!==S.tab; });
   $('#c-cal').textContent = new Set(S.requests.map(r=>r.personId)).size;
   if(S.isAdmin){ const {persons,byPerson}=resolve(); $('#c-asig').textContent = persons.filter(p=>!byPerson[p].chosen).length; }
 }
@@ -667,7 +667,7 @@ $('#tabs').addEventListener('click', e=>{ const b=e.target.closest('[data-tab]')
 $('#cal-shift').addEventListener('change', renderCalendario);
 $('#flex').addEventListener('change', syncFlexUI);
 $('#opts').addEventListener('change', e=>{ const row=e.target.closest('.opt-row'); if(row && e.target.classList.contains('o-from') && !$('.o-to',row).value) $('.o-to',row).value=addDays(e.target.value,13); updateDaysHints(); });
-$('#who').addEventListener('change', ()=>{ S.myPerson=$('#who').value; store.set('vacx-who', S.myPerson); S.formFor=null; renderPedido(); });
+$('#who').addEventListener('change', ()=>{ S.myPerson=$('#who').value; store.set('vacx-who', S.myPerson); S.formFor=null; renderPedido(); if(!S.isAdmin) refresh(true); });
 $('#save-req').addEventListener('click', ()=>guard(async()=>{
   const personId=$('#who').value; if(!personId){ toast('Elegí tu nombre primero.'); return; }
   const note=$('#note').value.trim();

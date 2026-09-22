@@ -64,7 +64,7 @@ function handle(p) {
         case 'import':      importRows(p.rows || []); break;
         default: return { ok: false, error: 'unknown_action' };
       }
-      const st = readState(isAdmin);
+      const st = readState(isAdmin, p.personId);
       st.ok = true; st.isAdmin = isAdmin;
       return st;
     } finally { lock.releaseLock(); }
@@ -226,8 +226,12 @@ function readResults() {
 }
 
 // ---------- estado completo ----------
-function readState(isAdmin) {
+// El equipo solo recibe SU propio pedido y SU resultado (personId elegido en la página);
+// los pedidos del resto solo viajan a coordinación.
+function readState(isAdmin, personId) {
   const cfg = readConfig();
+  const onlyMine = list => isAdmin ? list : list.filter(r => personId && r.personId === personId);
+  const results = readResults();
   const st = {
     config: {
       title: cfg.title || 'Vacaciones', periodStart: cfg.periodStart || '', periodEnd: cfg.periodEnd || '', rule: cfg.rule || 'shift',
@@ -235,8 +239,8 @@ function readState(isAdmin) {
       note: cfg.note || '', open: cfg.open !== false
     },
     team: readTeam(isAdmin),
-    requests: readRequests(),
-    results: readResults(),
+    requests: onlyMine(readRequests()),
+    results: results ? { publishedAt: results.publishedAt, items: onlyMine(results.items) } : null,
     serverTime: now()
   };
   if (isAdmin) st.overrides = readOverrides();
