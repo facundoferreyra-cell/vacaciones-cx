@@ -13,15 +13,16 @@
  * Cada vez que cambies este código: Implementar → Administrar implementaciones → editar → versión nueva.
  */
 
-// ▼▼ CAMBIÁ ESTAS DOS CLAVES ▼▼
-const TEAM_CODE  = 'cx2027';       // la que compartís con el equipo
+// ▼▼ CAMBIÁ ESTA CLAVE ▼▼
 const ADMIN_CODE = 'coordinacion'; // la tuya, para el panel de asignación
-// ▲▲ ------------------------ ▲▲
+// ▲▲ ------------------- ▲▲
+// Cada persona del equipo entra con su propia clave (columna "clave" de la pestaña Equipo,
+// se cargan o generan desde "Equipo y criterios"). El servidor identifica a la persona por su clave.
 
 const SH = { config: 'Config', team: 'Equipo', requests: 'Pedidos', overrides: 'Forzados', results: 'Resultados' };
 const HEAD = {
   config:    ['clave', 'valor'],
-  team:      ['id', 'nombre', 'turno', 'area', 'activo', 'fecha_ingreso', 'metrica'],
+  team:      ['id', 'nombre', 'turno', 'area', 'activo', 'fecha_ingreso', 'metrica', 'clave'],
   requests:  ['id', 'persona_id', 'opcion', 'desde', 'hasta', 'comentario', 'creado', 'origen', 'sin_fechas'],
   overrides: ['clave_pedido', 'estado', 'actualizado'],
   results:   ['publicado', 'persona_id', 'opcion', 'desde', 'hasta', 'estado', 'motivo']
@@ -41,9 +42,9 @@ function handle(p) {
   try {
     const action = p.action || 'state';
     if (action === 'ping') return { ok: true };
-    const isAdmin = p.code === ADMIN_CODE;
-    const isTeam = isAdmin || p.code === TEAM_CODE;
-    if (!isTeam) return { ok: false, error: 'bad_code' };
+    const code = String(p.code || '').trim();
+    if (!code) return { ok: false, error: 'bad_code' };
+    const isAdmin = code === ADMIN_CODE;
     const adminOnly = ['saveConfig', 'saveTeam', 'override', 'publish', 'setOpen', 'import', 'removePerson'];
     if (adminOnly.indexOf(action) >= 0 && !isAdmin) return { ok: false, error: 'admin_only' };
 
@@ -51,6 +52,12 @@ function handle(p) {
     lock.waitLock(15000);
     try {
       ensureSheets();
+      let me = null;
+      if (!isAdmin) {
+        me = readTeam(true).find(t => t.active !== false && t.code && t.code === code) || null;
+        if (!me) return { ok: false, error: 'bad_code' };
+        p.personId = me.id; // el servidor decide quién es: nunca el navegador
+      }
       switch (action) {
         case 'state':       break;
         case 'setRequest':  setRequest(p, isAdmin); break;
@@ -66,6 +73,7 @@ function handle(p) {
       }
       const st = readState(isAdmin, p.personId);
       st.ok = true; st.isAdmin = isAdmin;
+      if (me) st.me = { id: me.id, name: me.name, shift: me.shift, area: me.area };
       return st;
     } finally { lock.releaseLock(); }
   } catch (err) {
@@ -142,14 +150,19 @@ function setConfigKey(k, v) { const o = {}; o[k] = v; saveConfig(o); }
 function readTeam(withScores) {
   return rows('team').filter(r => r[0] && r[1]).map(r => {
     const p = { id: r[0], name: r[1], shift: r[2] === 'pm' ? 'pm' : 'am', area: r[3], active: r[4] === '' ? true : bool(r[4]) };
-    if (withScores) { p.seniorityDate = r[5] || ''; p.metric = r[6] === '' ? '' : Number(r[6]); }
+    if (withScores) { p.seniorityDate = r[5] || ''; p.metric = r[6] === '' ? '' : Number(r[6]); p.code = String(r[7] || '').trim(); }
     return p;
   });
 }
 function saveTeam(team) {
-  writeRows('team', team.filter(p => p && p.id && p.name).map(p => [
+  const clean = team.filter(p => p && p.id && p.name);
+  const codes = clean.map(p => String(p.code || '').trim()).filter(Boolean);
+  if (codes.some(c => c === ADMIN_CODE)) throw new Error('Una clave personal no puede ser igual a la de coordinación.');
+  if (new Set(codes).size !== codes.length) throw new Error('Hay dos personas con la misma clave.');
+  writeRows('team', clean.map(p => [
     String(p.id), String(p.name), p.shift === 'pm' ? 'pm' : 'am', String(p.area || ''), p.active === false ? 'FALSE' : 'TRUE',
-    String(p.seniorityDate || ''), (p.metric === '' || p.metric === null || p.metric === undefined || isNaN(Number(p.metric))) ? '' : String(Number(p.metric))
+    String(p.seniorityDate || ''), (p.metric === '' || p.metric === null || p.metric === undefined || isNaN(Number(p.metric))) ? '' : String(Number(p.metric)),
+    String(p.code || '').trim()
   ]));
 }
 
@@ -238,7 +251,7 @@ function readState(isAdmin, personId) {
       maxSimul: cfg.maxSimul || 1, maxDays: cfg.maxDays || 0, criteria: cfg.criteria || ['antiguedad', 'metricas', 'llegada'],
       note: cfg.note || '', open: cfg.open !== false
     },
-    team: readTeam(isAdmin),
+    team: isAdmin ? readTeam(true) : [],
     requests: onlyMine(readRequests()),
     results: results ? { publishedAt: results.publishedAt, items: onlyMine(results.items) } : null,
     serverTime: now()

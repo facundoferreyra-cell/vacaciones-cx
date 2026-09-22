@@ -7,7 +7,7 @@ Página para que el equipo de CX de Coderhouse postule sus fechas de vacaciones 
 
 - **Página:** GitHub Pages (`index.html`, sin dependencias).
 - **Datos:** un Google Sheet, a través de un script de Google Apps Script (`Code.gs`) publicado como app web.
-- **Acceso:** el equipo entra con una clave compartida; coordinación con otra clave que habilita las pestañas *Asignación* y *Equipo y criterios*.
+- **Acceso:** cada persona entra con su **clave personal** (columna `clave` de la pestaña Equipo; se generan desde *Equipo y criterios*). El servidor identifica a la persona por su clave, así que nadie puede ver ni editar el pedido de otro. Coordinación entra con `ADMIN_CODE`, que habilita *Calendario*, *Asignación* y *Equipo y criterios*.
 
 ## Puesta en marcha
 
@@ -16,9 +16,8 @@ Página para que el equipo de CX de Coderhouse postule sus fechas de vacaciones 
 1. Creá un Google Sheet nuevo (por ejemplo, "Vacaciones CX").
 2. Menú **Extensiones → Apps Script**.
 3. Borrá el contenido de `Código.gs` y pegá el de `Code.gs` de este repo.
-4. Arriba del archivo cambiá las dos claves:
+4. Arriba del archivo cambiá la clave de coordinación:
    ```js
-   const TEAM_CODE  = 'cx2027';       // la que compartís con el equipo
    const ADMIN_CODE = 'coordinacion'; // la tuya
    ```
 5. **Implementar → Nueva implementación → ⚙️ Tipo: App web**
@@ -40,7 +39,7 @@ Subí el cambio al repo. GitHub Pages se actualiza solo en un minuto.
 
 Entrá a la página con la clave de coordinación → pestaña **Equipo y criterios**: período, regla, criterios y la tabla del equipo (nombre, turno, área, fecha de ingreso, métrica). Guardar.
 
-Después compartí el link + la clave del equipo.
+En la tabla del equipo, **Generar claves faltantes** → Guardar → **Copiar lista de claves**, y pasale a cada persona el link + su clave por privado.
 
 ## Cómo funciona la asignación
 
@@ -59,7 +58,7 @@ Cada vez que cambies `Code.gs` en Apps Script: **Implementar → Administrar imp
 | Pestaña | Contenido |
 |---|---|
 | `Config` | título, período, regla, criterios, abierto/cerrado, fecha de última publicación |
-| `Equipo` | id, nombre, turno (`am`/`pm`), área, activo, fecha de ingreso, métrica |
+| `Equipo` | id, nombre, turno (`am`/`pm`), área, activo, fecha de ingreso, métrica, clave personal |
 | `Pedidos` | una fila por opción (columna `opcion` = 1, 2, 3), o una fila "sin fechas" con `sin_fechas = TRUE` |
 | `Forzados` | aprobaciones/rechazos manuales |
 | `Resultados` | la última asignación publicada |

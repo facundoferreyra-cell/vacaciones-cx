@@ -206,8 +206,8 @@ tbody tr:first-child td{border-top:0}
 
   <!-- ===== GATE ===== -->
   <section id="gate" class="card" style="max-width:460px;margin:24px auto" hidden>
-    <h2>Clave del equipo</h2>
-    <p class="lead small">Para entrar necesitás la clave que compartió coordinación.</p>
+    <h2>Tu clave personal</h2>
+    <p class="lead small">Ingresá la clave que te pasó coordinación. Es personal: con ella ves y editás solo tu pedido.</p>
     <div class="row">
       <input type="password" id="gate-code" placeholder="Clave" style="flex:1 1 200px" autocomplete="off">
       <button class="btn primary" id="gate-go">Entrar</button>
@@ -232,10 +232,11 @@ tbody tr:first-child td{border-top:0}
     <div class="stack">
       <div class="card" id="pedido-card">
         <h2>Postulá tus fechas</h2>
-        <p class="lead">Elegí tu nombre y cargá hasta tres opciones, en orden de preferencia. Podés volver a entrar y cambiarlas mientras la postulación esté abierta. Tu pedido lo ve solo coordinación.</p>
+        <p class="lead">Cargá hasta tres opciones, en orden de preferencia. Podés volver a entrar y cambiarlas mientras la postulación esté abierta. Tu pedido lo ve solo coordinación.</p>
         <div id="pedido-blocked" class="notice warn" hidden></div>
         <div class="stack" id="pedido-form">
-          <label class="f"><span>¿Quién sos?</span><select id="who"></select></label>
+          <label class="f" id="who-wrap"><span>¿Quién sos?</span><select id="who"></select></label>
+          <div id="me-line" class="notice info" hidden></div>
           <label class="f" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="flex" style="width:auto"> <span>Todavía no tengo fechas definidas</span></label>
           <div id="opts" class="stack">
             <div class="form-grid opt-row" data-opt="1"><span class="opt-label">Opción 1 <em class="hint">(la preferida)</em></span><label class="f"><span>Desde</span><input type="date" class="o-from"></label><label class="f"><span>Hasta <em class="hint o-days"></em></span><input type="date" class="o-to"></label></div>
@@ -366,9 +367,9 @@ Nico	20/02/2027	05/03/2027"></textarea>
 
     <div class="row between" style="margin:20px 0 10px">
       <h2>Equipo</h2>
-      <div class="row"><button class="btn sm" id="cf-add-person">+ Agregar persona</button></div>
+      <div class="row"><button class="btn sm" id="cf-gen-codes">Generar claves faltantes</button><button class="btn sm" id="cf-copy-codes">Copiar lista de claves</button><button class="btn sm" id="cf-add-person">+ Agregar persona</button></div>
     </div>
-    <p class="hint" style="margin-bottom:10px">Fecha de ingreso = antigüedad (más antiguo, más prioridad). Métrica = número, más alto mejor (CSAT, cumplimiento de objetivos, un promedio, lo que uses).</p>
+    <p class="hint" style="margin-bottom:10px">Fecha de ingreso = antigüedad (más antiguo, más prioridad). Métrica = número, más alto mejor (CSAT, cumplimiento de objetivos, un promedio, lo que uses). Clave = la que cada persona usa para entrar; pasásela por privado.</p>
     <div class="tbl-wrap"><table id="team-table"></table></div>
     <div class="row between" style="margin-top:14px">
       <span class="hint" id="cf-dirty"></span>
@@ -410,7 +411,7 @@ const norm = n => String(n).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(
 // ---------- state ----------
 const S = {
   code: store.get('vacx-code')||'', isAdmin:false, ready:false,
-  config:null, team:[], requests:[], overrides:{}, results:null,
+  config:null, team:[], me:null, requests:[], overrides:{}, results:null,
   tab:'pedido', myPerson: store.get('vacx-who')||null, formFor:null, cfgDirty:false, cfgRendered:'', importPlan:null, saving:false, pollT:null
 };
 let toastT;
@@ -430,7 +431,8 @@ async function api(payload){
   return json;
 }
 function applyState(st){
-  S.config=st.config||null; S.team=st.team||[]; S.requests=st.requests||[]; S.results=st.results||null; S.overrides=st.overrides||{}; S.isAdmin=!!st.isAdmin; S.ready=true;
+  S.config=st.config||null; S.team=st.team||[]; S.me=st.me||null; S.requests=st.requests||[]; S.results=st.results||null; S.overrides=st.overrides||{}; S.isAdmin=!!st.isAdmin; S.ready=true;
+  if(S.me){ S.myPerson=S.me.id; if(!S.team.length) S.team=[{id:S.me.id,name:S.me.name,shift:S.me.shift,area:S.me.area,active:true}]; }
   $('#dot').className='dot live'; $('#conn').textContent='Conectado · '+fmtTs(st.serverTime||new Date().toISOString());
   renderAll();
 }
@@ -502,7 +504,7 @@ function renderHeader(){
   const cfg=S.config||{};
   $('#title').textContent = cfg.title || 'Vacaciones';
   $('#subtitle').textContent = isOpen() ? 'Postulación abierta' : 'Postulación cerrada';
-  $('#role-chip').innerHTML = S.isAdmin ? '<span class="chip neutral">Coordinación</span>' : '';
+  $('#role-chip').innerHTML = S.isAdmin ? '<span class="chip neutral">Coordinación</span>' : (S.me ? `<span class="chip neutral">${esc(S.me.name)}</span>` : '');
   $('#btn-admin').hidden = S.isAdmin || !S.code; $('#btn-logout').hidden = !S.code;
 }
 function renderTabs(){
@@ -527,11 +529,13 @@ function renderPedido(){
   const cfg=S.config||{};
   const who=$('#who'); fillWho(who,true);
   if(S.myPerson && !who.value) who.value=S.myPerson;
+  if(S.me && !S.isAdmin){ who.value=S.me.id; $('#who-wrap').hidden=true; $('#me-line').hidden=false; $('#me-line').textContent=`Hola, ${S.me.name}. Este pedido es el tuyo.`; }
+  else { $('#who-wrap').hidden=false; $('#me-line').hidden=true; }
   const pid=who.value;
   if(pid && S.formFor!==pid) fillFormFor(pid);
   const blocked=$('#pedido-blocked'); const form=$('#pedido-form');
   let msg='';
-  if(!S.team.length) msg='La postulación todavía no está configurada. Cuando esté lista vas a poder cargar tus fechas acá.';
+  if(!S.team.length && !S.me) msg='La postulación todavía no está configurada. Cuando esté lista vas a poder cargar tus fechas acá.';
   else if(cfg.open===false) msg='La postulación está cerrada. Si necesitás cambiar algo, hablá con coordinación.';
   blocked.hidden=!msg; blocked.textContent=msg; form.hidden=!!msg;
   $('#rules-text').innerHTML = `<p>Coordinación revisa todos los pedidos y arma la asignación. Cuando esté publicada, vas a ver acá qué opción te quedó.</p>${cfg.note?`<p style="margin-top:6px">${esc(cfg.note)}</p>`:''}`;
@@ -639,13 +643,13 @@ function renderConfig(){
   $('#cf-max').value=cfg.maxSimul||1; $('#cf-maxdays').value=cfg.maxDays||0; $('#cf-note').value=cfg.note||'';
   const crit=(cfg.criteria&&cfg.criteria.length===3)?cfg.criteria:CRIT_KEYS;
   ['#cf-c1','#cf-c2','#cf-c3'].forEach((id,i)=>{ const s=$(id); s.innerHTML=CRIT_KEYS.map(k=>`<option value="${k}">${CRIT[k]}</option>`).join(''); s.value=crit[i]; });
-  $('#team-table').innerHTML = `<thead><tr><th>Nombre</th><th>Turno</th><th>Área</th><th>Fecha de ingreso</th><th>Métrica</th><th>Activo</th><th></th></tr></thead><tbody>` +
-    S.team.map(p=>`<tr data-id="${esc(p.id)}"><td><input type="text" class="t-name" value="${esc(p.name)}"></td><td><select class="t-shift"><option value="am"${p.shift==='am'?' selected':''}>Mañana</option><option value="pm"${p.shift==='pm'?' selected':''}>Tarde</option></select></td><td><input type="text" class="t-area" value="${esc(p.area||'')}" list="areas"></td><td><input type="date" class="t-sen" value="${esc(p.seniorityDate||'')}"></td><td><input type="number" step="any" class="t-met" value="${p.metric===undefined||p.metric===null?'':esc(p.metric)}"></td><td><input type="checkbox" class="t-act"${p.active!==false?' checked':''}></td><td><button class="btn xs ghost danger t-del" title="Quitar">✕</button></td></tr>`).join('') + `</tbody>` +
+  $('#team-table').innerHTML = `<thead><tr><th>Nombre</th><th>Turno</th><th>Área</th><th>Fecha de ingreso</th><th>Métrica</th><th>Clave</th><th>Activo</th><th></th></tr></thead><tbody>` +
+    S.team.map(p=>`<tr data-id="${esc(p.id)}"><td><input type="text" class="t-name" value="${esc(p.name)}"></td><td><select class="t-shift"><option value="am"${p.shift==='am'?' selected':''}>Mañana</option><option value="pm"${p.shift==='pm'?' selected':''}>Tarde</option></select></td><td><input type="text" class="t-area" value="${esc(p.area||'')}" list="areas"></td><td><input type="date" class="t-sen" value="${esc(p.seniorityDate||'')}"></td><td><input type="number" step="any" class="t-met" value="${p.metric===undefined||p.metric===null?'':esc(p.metric)}"></td><td><input type="text" class="t-code" value="${esc(p.code||'')}" style="width:110px;font-family:ui-monospace,monospace" placeholder="sin clave"></td><td><input type="checkbox" class="t-act"${p.active!==false?' checked':''}></td><td><button class="btn xs ghost danger t-del" title="Quitar">✕</button></td></tr>`).join('') + `</tbody>` +
     `<datalist id="areas">${Array.from(new Set(S.team.map(p=>p.area).filter(Boolean))).map(a=>`<option value="${esc(a)}">`).join('')}</datalist>`;
 }
 function readConfigForm(){
   const team=[]; $$('#team-table tbody tr').forEach(r=>{ const name=$('.t-name',r).value.trim(); if(!name) return; const id=r.dataset.id||slug(name)||('p'+Date.now());
-    const met=$('.t-met',r).value; team.push({id, name, shift:$('.t-shift',r).value, area:$('.t-area',r).value.trim(), active:$('.t-act',r).checked, seniorityDate:$('.t-sen',r).value||'', metric: met===''?'':Number(met)}); });
+    const met=$('.t-met',r).value; team.push({id, name, shift:$('.t-shift',r).value, area:$('.t-area',r).value.trim(), active:$('.t-act',r).checked, seniorityDate:$('.t-sen',r).value||'', metric: met===''?'':Number(met), code:$('.t-code',r).value.trim()}); });
   const crit=[$('#cf-c1').value,$('#cf-c2').value,$('#cf-c3').value]; const critOk=new Set(crit).size===3;
   const cfg={title:$('#cf-title').value.trim(), periodStart:$('#cf-start').value, periodEnd:$('#cf-end').value, rule:$('#cf-rule').value, maxSimul:Math.max(1,Number($('#cf-max').value)||1), maxDays:Math.max(0,Number($('#cf-maxdays').value)||0), criteria:critOk?crit:CRIT_KEYS, note:$('#cf-note').value.trim()};
   return {cfg, team, critOk};
@@ -712,13 +716,18 @@ $('#imp-commit').addEventListener('click', ()=>guard(async()=>{ const rows=S.imp
 // config
 $('#tab-config').addEventListener('input', e=>{ if(e.target.closest('input,select')){ S.cfgDirty=true; $('#cf-dirty').textContent='Tenés cambios sin guardar.'; } });
 $('#team-table').addEventListener('click', e=>{ const b=e.target.closest('.t-del'); if(b){ b.closest('tr').remove(); S.cfgDirty=true; $('#cf-dirty').textContent='Tenés cambios sin guardar.'; } });
-$('#cf-add-person').addEventListener('click', ()=>{ let tb=$('#team-table tbody'); if(!tb){ $('#team-table').innerHTML='<thead><tr><th>Nombre</th><th>Turno</th><th>Área</th><th>Fecha de ingreso</th><th>Métrica</th><th>Activo</th><th></th></tr></thead><tbody></tbody>'; tb=$('#team-table tbody'); }
-  const tr=document.createElement('tr'); tr.dataset.id=''; tr.innerHTML=`<td><input type="text" class="t-name" placeholder="Nombre"></td><td><select class="t-shift"><option value="am">Mañana</option><option value="pm">Tarde</option></select></td><td><input type="text" class="t-area" list="areas"></td><td><input type="date" class="t-sen"></td><td><input type="number" step="any" class="t-met"></td><td><input type="checkbox" class="t-act" checked></td><td><button class="btn xs ghost danger t-del">✕</button></td>`; tb.appendChild(tr); $('.t-name',tr).focus(); S.cfgDirty=true; });
+$('#cf-add-person').addEventListener('click', ()=>{ let tb=$('#team-table tbody'); if(!tb){ $('#team-table').innerHTML='<thead><tr><th>Nombre</th><th>Turno</th><th>Área</th><th>Fecha de ingreso</th><th>Métrica</th><th>Clave</th><th>Activo</th><th></th></tr></thead><tbody></tbody>'; tb=$('#team-table tbody'); }
+  const tr=document.createElement('tr'); tr.dataset.id=''; tr.innerHTML=`<td><input type="text" class="t-name" placeholder="Nombre"></td><td><select class="t-shift"><option value="am">Mañana</option><option value="pm">Tarde</option></select></td><td><input type="text" class="t-area" list="areas"></td><td><input type="date" class="t-sen"></td><td><input type="number" step="any" class="t-met"></td><td><input type="text" class="t-code" style="width:110px;font-family:ui-monospace,monospace" placeholder="sin clave"></td><td><input type="checkbox" class="t-act" checked></td><td><button class="btn xs ghost danger t-del">✕</button></td>`; tb.appendChild(tr); $('.t-name',tr).focus(); S.cfgDirty=true; });
+function genCode(name){ const base=slug(name).split('-')[0].slice(0,6)||'cx'; const abc='abcdefghjkmnpqrstuvwxyz23456789'; let r=''; for(let i=0;i<4;i++) r+=abc[Math.floor(Math.random()*abc.length)]; return base+'-'+r; }
+$('#cf-gen-codes').addEventListener('click', ()=>{ const used=new Set($$('#team-table .t-code').map(i=>i.value.trim()).filter(Boolean)); let n=0; $$('#team-table tbody tr').forEach(r=>{ const c=$('.t-code',r); if(c.value.trim()) return; let code; do{ code=genCode($('.t-name',r).value||'cx'); }while(used.has(code)); used.add(code); c.value=code; n++; }); if(n){ S.cfgDirty=true; $('#cf-dirty').textContent='Tenés cambios sin guardar.'; } toast(n?`${n} clave${n>1?'s':''} generada${n>1?'s':''}. Guardá para que queden activas.`:'Todas las personas ya tienen clave.'); });
+$('#cf-copy-codes').addEventListener('click', async()=>{ const lines=$$('#team-table tbody tr').map(r=>({n:$('.t-name',r).value.trim(), c:$('.t-code',r).value.trim(), a:$('.t-act',r).checked})).filter(x=>x.n&&x.a).map(x=>`${x.n}: ${x.c||'(sin clave)'}`); const txt=`Vacaciones CX · ${location.origin+location.pathname}\n\n`+lines.join('\n'); try{ await navigator.clipboard.writeText(txt); toast('Lista copiada. Pasale a cada persona solo su línea.'); }catch(_){ window.prompt('Copiá la lista:', txt); } });
 $('#cf-discard').addEventListener('click', ()=>{ S.cfgDirty=false; S.cfgRendered=''; renderConfig(); });
 $('#cf-save').addEventListener('click', ()=>guard(async()=>{
   const {cfg,team,critOk}=readConfigForm(); if(!critOk){ toast('Los tres criterios de desempate tienen que ser distintos.'); return; }
   if(cfg.periodStart && cfg.periodEnd && cfg.periodEnd<cfg.periodStart){ toast('El calendario termina antes de empezar.'); return; }
   const ids=team.map(p=>p.id); if(new Set(ids).size!==ids.length){ toast('Hay dos personas con el mismo nombre; diferencialas (ej. apellido).'); return; }
+  const codes=team.map(p=>p.code).filter(Boolean); if(new Set(codes).size!==codes.length){ toast('Hay dos personas con la misma clave.'); return; }
+  if(team.some(p=>p.active!==false && !p.code)){ toast('Hay personas activas sin clave: usá "Generar claves faltantes".'); return; }
   await api({action:'saveConfig', config:cfg}); await api({action:'saveTeam', team});
   S.cfgDirty=false; S.cfgRendered=''; renderConfig(); toast('Guardado.');
 }));
