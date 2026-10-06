@@ -292,7 +292,7 @@ tbody tr:first-child td{border-top:0}
     <div class="row between" style="margin-bottom:12px">
       <div>
         <h2>Asignación por prioridad</h2>
-        <p class="muted small">Cada persona recibe la primera de sus opciones que no se pisa con lo ya aprobado, en orden de prioridad. Podés forzar cualquier fila y después publicar.</p>
+        <p class="muted small">Cada persona recibe la primera de sus opciones que no se pisa con lo ya aprobado, en orden de prioridad. Solo cuentan los días hábiles: compartir un fin de semana no es pisarse. Podés forzar cualquier fila y después publicar.</p>
       </div>
       <div class="row">
         <button class="btn" id="btn-toggle-open"></button>
@@ -358,7 +358,7 @@ Nico	20/02/2027	05/03/2027"></textarea>
         <h2>Cómo funciona</h2>
         <div class="small stack" style="color:var(--ink-2)">
           <p>Cada persona carga hasta tres opciones de fechas en orden de preferencia, o se marca como <b>sin fechas definidas</b>. Las opciones son alternativas: se aprueba una sola por persona.</p>
-          <p>Las personas se ordenan según los criterios de desempate. En ese orden, cada una recibe la primera de sus opciones que no se pisa con lo ya aprobado dentro de su grupo (según la regla). Si ninguna entra, queda sin asignar y podés forzar o pedirle otras fechas.</p>
+          <p>Las personas se ordenan según los criterios de desempate. En ese orden, cada una recibe la primera de sus opciones que no se pisa con lo ya aprobado dentro de su grupo (según la regla). Dos opciones se pisan solo si comparten al menos un día hábil (lunes a viernes); un fin de semana en común no cuenta. Si ninguna entra, queda sin asignar y podés forzar o pedirle otras fechas.</p>
           <p>Antigüedad, métricas y este orden solo los ve coordinación. El equipo ve sus opciones, el calendario y, cuando publicás, el resultado.</p>
           <p>Todo se guarda en el Google Sheet conectado; podés abrirlo para ver o corregir los datos a mano.</p>
         </div>
@@ -404,6 +404,9 @@ const MESES_L = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agost
 const fmtL = s => { if(!s) return '—'; const d=pd(s); return d.getUTCDate()+' '+MESES[d.getUTCMonth()]+' '+d.getUTCFullYear(); };
 const fmtTs = iso => { if(!iso) return '—'; const d=new Date(iso); if(isNaN(d)) return '—'; return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
 const overlap = (a,b) => a.from <= b.to && b.from <= a.to;
+const isWeekend = s => { const d=pd(s).getUTCDay(); return d===0||d===6; };
+// Dos pedidos se pisan solo si comparten al menos un día hábil (lunes a viernes): un fin de semana en común no cuenta.
+const clash = (a,b) => { if(!overlap(a,b)) return false; let d = a.from>b.from?a.from:b.from; const end = a.to<b.to?a.to:b.to; while(d<=end){ if(!isWeekend(d)) return true; d=addDays(d,1); } return false; };
 const todayStr = () => { const d=new Date(); return fd(new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()))); };
 const slug = n => String(n).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
 const norm = n => String(n).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
@@ -460,7 +463,7 @@ function whyBefore(a, b, criteria, scores){
   for(const c of criteria){ const r=critCmp(c,a,b,scores); if(r<0) return c==='antiguedad'?'tiene más antigüedad':c==='metricas'?'tiene mejor métrica':'postuló antes'; if(r>0) return 'fue definido por coordinación'; }
   return 'quedó primero por orden';
 }
-function anyDayOver(it, others, max){ let d=it.from; while(d<=it.to){ let n=0; for(const o of others){ if(o.from<=d && d<=o.to) n++; } if(n>=max) return true; d=addDays(d,1); } return false; }
+function anyDayOver(it, others, max){ let d=it.from; while(d<=it.to){ if(!isWeekend(d)){ let n=0; for(const o of others){ if(o.from<=d && d<=o.to) n++; } if(n>=max) return true; } d=addDays(d,1); } return false; }
 function resolve(){
   const cfg=S.config||{}; const team=teamById(); const scores=scoresOf(); const ov=S.overrides||{};
   const criteria=(cfg.criteria&&cfg.criteria.length===3)?cfg.criteria:CRIT_KEYS;
@@ -474,12 +477,12 @@ function resolve(){
     const p=team[pid]; const opts=items.filter(i=>i.personId===pid).sort((a,b)=>a.option-b.option);
     opts.forEach(o=>{ o.rank=idx+1; o.person=p; o.group=groupKey(p,rule); o.status=null; o.reason=''; o.overridden=false; });
     let chosen=opts.find(o=>ov[o.key]==='approved');
-    if(chosen){ chosen.overridden=true; const clashes=approved.filter(o=>o.group===chosen.group && overlap(o,chosen)); if(clashes.length) chosen.reason='Forzado por coordinación. '+clashText(chosen,clashes); else chosen.reason='Forzado por coordinación.'; }
+    if(chosen){ chosen.overridden=true; const clashes=approved.filter(o=>o.group===chosen.group && clash(o,chosen)); if(clashes.length) chosen.reason='Forzado por coordinación. '+clashText(chosen,clashes); else chosen.reason='Forzado por coordinación.'; }
     else {
       for(const o of opts){
         if(ov[o.key]==='rejected'){ o.status='rejected'; o.overridden=true; o.reason='Rechazado por coordinación.'; continue; }
         if(maxDays>0 && o.days>maxDays){ o.status='rejected'; o.reason=`Supera el tope de ${maxDays} días.`; continue; }
-        const clashes=approved.filter(x=>x.group===o.group && overlap(x,o));
+        const clashes=approved.filter(x=>x.group===o.group && clash(x,o));
         const blocked = max<=1 ? clashes.length>0 : anyDayOver(o,clashes,max);
         if(blocked){ o.status='rejected'; o.reason=clashText(o,clashes); continue; }
         chosen=o; break;

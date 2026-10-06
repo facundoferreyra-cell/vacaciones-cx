@@ -45,7 +45,7 @@ En la tabla del equipo, **Generar claves faltantes** → Guardar → **Copiar li
 
 1. Cada persona carga hasta **tres opciones** de fechas en orden de preferencia (cualquier fecha, sin límites), o se marca como **"no tengo fechas definidas"**. Las opciones son alternativas: se aprueba una sola por persona.
 2. Las personas se ordenan por los criterios de desempate configurados (antigüedad → métricas → orden de llegada).
-3. En ese orden, cada persona recibe la primera de sus opciones que no se pisa con lo ya aprobado dentro de su grupo (turno, turno + área o todo el equipo, según la regla). Si ninguna entra, queda sin asignar.
+3. En ese orden, cada persona recibe la primera de sus opciones que no se pisa con lo ya aprobado dentro de su grupo (turno, turno + área o todo el equipo, según la regla). Dos opciones se pisan solo si comparten al menos un **día hábil** (lunes a viernes); coincidir en un fin de semana no cuenta. Si ninguna entra, queda sin asignar.
 4. Coordinación puede forzar cualquier opción (aprobar/rechazar), cargar pedidos a nombre de alguien o importar las respuestas de un Google Form pegándolas.
 5. Nada llega al equipo hasta que se aprieta **Publicar asignación**. Cada persona ve únicamente su propio pedido y su propio resultado: los pedidos del resto, el calendario, las reglas y los criterios solo los ve coordinación (el servidor filtra por persona).
 
