@@ -37,7 +37,9 @@ Subí el cambio al repo. GitHub Pages se actualiza solo en un minuto.
 
 ### 3. Cargar el equipo
 
-Entrá a la página con la clave de coordinación → pestaña **Equipo y criterios**: período, regla, criterios y la tabla del equipo (nombre, turno, área, fecha de ingreso, métrica). Guardar.
+Entrá a la página con la clave de coordinación → pestaña **Equipo y criterios**: período, regla, criterios y la tabla del equipo (nombre, turno, área, fecha de ingreso, métrica, días de trabajo). Guardar.
+
+Los **días de trabajo** se marcan con los botones L M X J V S D de cada persona (por defecto lunes a viernes). Sirven para dos cosas: decidir si dos pedidos se pisan y mostrar quién está cada día en *Cobertura* (los sábados y domingos aparecen como un solo bloque de 9 a 18).
 
 En la tabla del equipo, **Generar claves faltantes** → Guardar → **Copiar lista de claves**, y pasale a cada persona el link + su clave por privado.
 
@@ -45,7 +47,7 @@ En la tabla del equipo, **Generar claves faltantes** → Guardar → **Copiar li
 
 1. Cada persona carga hasta **tres opciones** de fechas en orden de preferencia (cualquier fecha, sin límites), o se marca como **"no tengo fechas definidas"**. Las opciones son alternativas: se aprueba una sola por persona.
 2. Las personas se ordenan por los criterios de desempate configurados (antigüedad → métricas → orden de llegada).
-3. En ese orden, cada persona recibe la primera de sus opciones que no se pisa con lo ya aprobado dentro de su grupo (turno, turno + área o todo el equipo, según la regla). Dos opciones se pisan solo si comparten al menos un **día hábil** (lunes a viernes); coincidir en un fin de semana no cuenta. Si ninguna entra, queda sin asignar.
+3. En ese orden, cada persona recibe la primera de sus opciones que no se pisa con lo ya aprobado dentro de su grupo (turno, turno + área o todo el equipo, según la regla). Dos opciones se pisan solo si comparten al menos un día en el que **las dos personas trabajan** (según la columna *Días* de cada una); coincidir en un día que alguna de las dos tiene libre no cuenta. Si ninguna entra, queda sin asignar.
 4. Coordinación puede forzar cualquier opción (aprobar/rechazar), cargar pedidos a nombre de alguien o importar las respuestas de un Google Form pegándolas.
 5. Nada llega al equipo hasta que se aprieta **Publicar asignación**. Cada persona ve únicamente su propio pedido y su propio resultado: los pedidos del resto, el calendario, las reglas y los criterios solo los ve coordinación (el servidor filtra por persona).
 
@@ -58,7 +60,7 @@ Cada vez que cambies `Code.gs` en Apps Script: **Implementar → Administrar imp
 | Pestaña | Contenido |
 |---|---|
 | `Config` | título, período, regla, criterios, abierto/cerrado, fecha de última publicación |
-| `Equipo` | id, nombre, turno (`am`/`pm`), área, activo, fecha de ingreso, métrica, clave personal |
+| `Equipo` | id, nombre, turno (`am`/`pm`), área, activo, fecha de ingreso, métrica, clave personal, días de trabajo (`dias`, letras L M X J V S D; vacío = `LMXJV`) |
 | `Pedidos` | una fila por opción (columna `opcion` = 1, 2, 3), o una fila "sin fechas" con `sin_fechas = TRUE` |
 | `Forzados` | aprobaciones/rechazos manuales |
 | `Resultados` | la última asignación publicada |

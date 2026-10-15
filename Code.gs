@@ -3,7 +3,8 @@
  * ------------------------------------------------
  * Guarda todo en las pestañas de este Google Sheet:
  *   Config     → clave/valor (título, período, regla, criterios, abierto)
- *   Equipo     → una fila por persona (id, nombre, turno, área, activo, fecha_ingreso, metrica)
+ *   Equipo     → una fila por persona (id, nombre, turno, área, activo, fecha_ingreso, metrica, clave, dias)
+ *                dias = letras de los días que trabaja: L M X J V S D (vacío = LMXJV)
  *   Pedidos    → una fila por opción pedida (opción 1, 2, 3) o una fila "sin fechas definidas"
  *   Forzados   → aprobaciones/rechazos manuales de coordinación
  *   Resultados → la última asignación publicada, tal como la ve el equipo
@@ -22,7 +23,7 @@ const ADMIN_CODE = 'coordinacion'; // la tuya, para el panel de asignación
 const SH = { config: 'Config', team: 'Equipo', requests: 'Pedidos', overrides: 'Forzados', results: 'Resultados' };
 const HEAD = {
   config:    ['clave', 'valor'],
-  team:      ['id', 'nombre', 'turno', 'area', 'activo', 'fecha_ingreso', 'metrica', 'clave'],
+  team:      ['id', 'nombre', 'turno', 'area', 'activo', 'fecha_ingreso', 'metrica', 'clave', 'dias'],
   requests:  ['id', 'persona_id', 'opcion', 'desde', 'hasta', 'comentario', 'creado', 'origen', 'sin_fechas'],
   overrides: ['clave_pedido', 'estado', 'actualizado'],
   results:   ['publicado', 'persona_id', 'opcion', 'desde', 'hasta', 'estado', 'motivo']
@@ -149,7 +150,7 @@ function setConfigKey(k, v) { const o = {}; o[k] = v; saveConfig(o); }
 // ---------- equipo ----------
 function readTeam(withScores) {
   return rows('team').filter(r => r[0] && r[1]).map(r => {
-    const p = { id: r[0], name: r[1], shift: r[2] === 'pm' ? 'pm' : 'am', area: r[3], active: r[4] === '' ? true : bool(r[4]) };
+    const p = { id: r[0], name: r[1], shift: r[2] === 'pm' ? 'pm' : 'am', area: r[3], active: r[4] === '' ? true : bool(r[4]), days: String(r[8] || '').toUpperCase().replace(/[^LMXJVSD]/g, '') || 'LMXJV' };
     if (withScores) { p.seniorityDate = r[5] || ''; p.metric = r[6] === '' ? '' : Number(r[6]); p.code = String(r[7] || '').trim(); }
     return p;
   });
@@ -162,7 +163,8 @@ function saveTeam(team) {
   writeRows('team', clean.map(p => [
     String(p.id), String(p.name), p.shift === 'pm' ? 'pm' : 'am', String(p.area || ''), p.active === false ? 'FALSE' : 'TRUE',
     String(p.seniorityDate || ''), (p.metric === '' || p.metric === null || p.metric === undefined || isNaN(Number(p.metric))) ? '' : String(Number(p.metric)),
-    String(p.code || '').trim()
+    String(p.code || '').trim(),
+    String(p.days || 'LMXJV').toUpperCase().replace(/[^LMXJVSD]/g, '') || 'LMXJV'
   ]));
 }
 
