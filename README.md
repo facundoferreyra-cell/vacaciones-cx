@@ -7,7 +7,7 @@ Página para que el equipo de CX de Coderhouse postule sus fechas de vacaciones 
 
 - **Página:** GitHub Pages (`index.html`, sin dependencias).
 - **Datos:** un Google Sheet, a través de un script de Google Apps Script (`Code.gs`) publicado como app web.
-- **Acceso:** cada persona entra con su **clave personal** (columna `clave` de la pestaña Equipo; se generan desde *Equipo y criterios*). El servidor identifica a la persona por su clave, así que nadie puede ver ni editar el pedido de otro. Coordinación entra con `ADMIN_CODE`, que habilita *Calendario*, *Asignación* y *Equipo y criterios*.
+- **Acceso:** cada persona entra con su **clave personal** (columna `clave` de la pestaña Equipo; se generan desde *Equipo y criterios*). El servidor identifica a la persona por su clave, así que nadie puede ver ni editar el pedido de otro. Coordinación entra con `ADMIN_CODE`, que habilita *Calendario*, *Asignación*, *Cobertura* (cuántas personas quedan activas por día y turno con lo aprobado) y *Equipo y criterios*.
 
 ## Puesta en marcha
 
