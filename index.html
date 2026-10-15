@@ -178,31 +178,27 @@ details summary{cursor:pointer;font-weight:500;color:var(--ink-2)}
 kbd{font-family:ui-monospace,monospace;font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
 @media (prefers-reduced-motion:no-preference){.btn,.tabs button{transition:border-color .12s,background .12s}}
 @media (max-width:600px){.req{grid-template-columns:1fr;gap:6px} .tl{--label:130px}}
-.cov-wrap{max-height:75vh;overflow:auto}
-.cov{width:auto;min-width:100%;font-size:13px;border-collapse:separate;border-spacing:0}
-.cov th,.cov td{padding:0;border-bottom:1px solid var(--line-2);border-right:1px solid var(--line-2)}
-.cov th{position:sticky;z-index:3;background:var(--surface);top:0;text-align:center}
-.cov th.sub{top:26px;height:38px;min-width:132px;width:132px;font-size:12px;letter-spacing:0;text-transform:none;color:var(--ink);line-height:1.15;font-weight:600}
-.cov th.sub .dw{display:block;font-size:10px;color:var(--ink-3);font-weight:500;text-transform:uppercase;letter-spacing:.06em}
-.cov th.grp{height:26px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);border-bottom:0}
-.cov th.mo{border-left:2px solid var(--line);text-align:left;padding-left:8px}
-.cov th.name,.cov td.name{position:sticky;left:0;z-index:2;background:var(--surface);text-align:left;padding:0 10px;min-width:150px;white-space:nowrap;border-right:2px solid var(--line)}
-.cov th.name{z-index:4}
-.cov td{height:28px;text-align:center}
-.cov td.who{text-align:left;padding:3px 8px;white-space:nowrap}
-.cov td.who .nm{font-weight:500}
-.cov td.who .ar{margin-left:6px;font-size:10px;font-weight:600;letter-spacing:.05em;color:var(--ink-3);text-transform:uppercase}
-.cov td.who.empty{background:repeating-linear-gradient(135deg,transparent 0 6px,var(--line-2) 6px 7px)}
-.cov td.we,.cov th.sub.we{background:var(--weekend)}
-.cov th.sub.today{box-shadow:inset 0 -3px 0 var(--today)}
-.cov tr.tot td{border-top:2px solid var(--line);font-variant-numeric:tabular-nums;font-weight:700;height:32px}
-.cov tr.tot td.name{font-family:"Sora",sans-serif}
-.cov tr.off td{height:26px;color:var(--accent);font-size:12px;border-bottom:2px solid var(--line)}
-.cov tr.off td.who .nm{display:inline-block;margin-right:8px;font-weight:600}
-.cov tr.off td.name{color:var(--ink-3)}
-.cov td.lvl-ok{background:var(--ok-soft);color:var(--ok)}
-.cov td.lvl-warn{background:var(--warn-soft);color:var(--warn)}
-.cov td.lvl-bad{background:var(--bad-soft);color:var(--bad)}
+.cal-grid{display:grid;gap:6px}
+.cal-h{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);padding:0 4px 4px}
+.cal-d{background:var(--surface);border:1px solid var(--line-2);border-radius:8px;padding:8px;min-height:120px;min-width:0}
+.cal-d.blank{background:transparent;border-color:transparent}
+.cal-d.we{background:var(--surface-2)}
+.cal-d.out{opacity:.45}
+.cal-d.today{border-color:var(--today);box-shadow:inset 0 0 0 1px var(--today)}
+.cal-num{font-family:"Sora",sans-serif;font-weight:600;font-size:14px;margin-bottom:6px}
+.cal-sh{margin-top:6px}
+.cal-sh-h{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px}
+.cal-sh-h .n{font-size:11px;font-weight:700;padding:0 6px;border-radius:999px;font-variant-numeric:tabular-nums}
+.cal-sh ul{list-style:none;margin:0;padding:0;font-size:12px;line-height:1.45}
+.cal-sh li{display:flex;justify-content:space-between;gap:6px;white-space:nowrap;overflow:hidden}
+.cal-sh li .nm{overflow:hidden;text-overflow:ellipsis}
+.cal-sh li .ar{font-size:9.5px;font-weight:600;letter-spacing:.05em;color:var(--ink-3);text-transform:uppercase;flex:0 0 auto}
+.cal-sh li.offl{display:block;color:var(--accent);font-weight:600;white-space:normal;margin-top:2px;font-size:11.5px}
+.cal-sh li.offl::before{content:"✕ ";font-weight:700}
+.n.lvl-ok{background:var(--ok-soft);color:var(--ok)}
+.n.lvl-warn{background:var(--warn-soft);color:var(--warn)}
+.n.lvl-bad{background:var(--bad-soft);color:var(--bad)}
+@media (max-width:700px){.cal-grid{grid-template-columns:1fr !important}.cal-h{display:none}.cal-d.blank{display:none}}
 .legend i.lvl-ok{background:var(--ok-soft);border:1px solid var(--ok)}
 .legend i.lvl-warn{background:var(--warn-soft);border:1px solid var(--warn)}
 .legend i.lvl-bad{background:var(--bad-soft);border:1px solid var(--bad)}
@@ -364,11 +360,14 @@ Nico	20/02/2027	05/03/2027"></textarea>
         <p class="muted small" id="cov-sub">Cuántas personas quedan activas en cada turno si se aprobara lo que hoy muestra Asignación.</p>
       </div>
       <div class="row">
-        <label class="f" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="cov-weekdays" style="width:auto" checked> <span>Solo días hábiles</span></label>
+        <button class="btn sm" id="cov-prev" title="Mes anterior">‹</button>
+        <select id="cov-month" style="width:auto;min-width:170px"></select>
+        <button class="btn sm" id="cov-next" title="Mes siguiente">›</button>
+        <label class="f" style="flex-direction:row;align-items:center;gap:8px;margin-left:8px"><input type="checkbox" id="cov-weekdays" style="width:auto" checked> <span>Solo días hábiles</span></label>
       </div>
     </div>
     <div class="tiles" id="cov-tiles"></div>
-    <div class="tbl-wrap cov-wrap"><table id="cov-table" class="cov"></table></div>
+    <div class="cal" id="cov-cal"></div>
     <div class="legend">
       <span><i class="lvl-ok"></i> Cobertura completa o falta 1</span>
       <span><i class="lvl-warn"></i> Queda la mitad o menos</span>
@@ -464,7 +463,7 @@ const norm = n => String(n).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(
 const S = {
   code: store.get('vacx-code')||'', isAdmin:false, ready:false,
   config:null, team:[], me:null, requests:[], overrides:{}, results:null,
-  tab:'pedido', myPerson: store.get('vacx-who')||null, formFor:null, cfgDirty:false, cfgRendered:'', importPlan:null, saving:false, pollT:null
+  tab:'pedido', myPerson: store.get('vacx-who')||null, formFor:null, covMonth:null, cfgDirty:false, cfgRendered:'', importPlan:null, saving:false, pollT:null
 };
 let toastT;
 const toast = m => { let t=$('.toast'); if(!t){ t=document.createElement('div'); t.className='toast'; document.body.appendChild(t);} t.textContent=m; clearTimeout(toastT); toastT=setTimeout(()=>t.remove(),3600); };
@@ -690,48 +689,50 @@ function renderCobertura(){
   const cfg=S.config||{}; const team=teamById(); const people=activeTeam();
   const approved=resolve().items.filter(it=>it.status==='approved' && team[it.personId]);
   const weekdaysOnly=$('#cov-weekdays').checked;
-  const t=$('#cov-table'); const tiles=$('#cov-tiles');
-  if(!approved.length){ t.innerHTML='<tbody><tr><td class="empty">Todavía no hay opciones aprobadas en Asignación.</td></tr></tbody>'; tiles.innerHTML=''; return; }
+  const cal=$('#cov-cal'); const tiles=$('#cov-tiles'); const sel=$('#cov-month');
+  if(!approved.length){ cal.innerHTML='<div class="empty">Todavía no hay opciones aprobadas en Asignación.</div>'; tiles.innerHTML=''; sel.innerHTML=''; return; }
   let start=cfg.periodStart||'', end=cfg.periodEnd||'';
   const mn=approved.reduce((a,b)=>a<b.from?a:b.from, approved[0].from), mx=approved.reduce((a,b)=>a>b.to?a:b.to, approved[0].to);
   if(!start||mn<start) start=mn; if(!end||mx>end) end=mx;
-  const days=[]; let d=start; while(d<=end){ const dow=pd(d).getUTCDay(); const we=dow===0||dow===6; if(!(weekdaysOnly&&we)) days.push({d,dow,we}); d=addDays(d,1); }
-  if(days.length>200){ t.innerHTML='<tbody><tr><td class="empty">El rango es demasiado largo para mostrarlo (máx. 200 días).</td></tr></tbody>'; tiles.innerHTML=''; return; }
-  const today=todayStr(); const DOW=['dom','lun','mar','mié','jue','vie','sáb'];
-  const shifts=['am','pm'].filter(sh=>people.some(p=>p.shift===sh)); const SH_SHORT={am:'TM',pm:'TT'};
+  // meses disponibles
+  const months=[]; let m=start.slice(0,7); while(m<=end.slice(0,7)){ months.push(m); const [y,mo]=m.split('-').map(Number); m=(mo===12?(y+1)+'-01':y+'-'+String(mo+1).padStart(2,'0')); }
+  if(!S.covMonth||!months.includes(S.covMonth)){ const firstOff=approved.map(i=>i.from).sort()[0].slice(0,7); S.covMonth=months.includes(firstOff)?firstOff:months[0]; }
+  sel.innerHTML=months.map(k=>{ const [y,mo]=k.split('-').map(Number); return `<option value="${k}"${k===S.covMonth?' selected':''}>${MESES_L[mo-1]} ${y}</option>`; }).join('');
+  $('#cov-prev').disabled = months.indexOf(S.covMonth)===0; $('#cov-next').disabled = months.indexOf(S.covMonth)===months.length-1;
+  const [Y,M]=S.covMonth.split('-').map(Number); const first=`${Y}-${String(M).padStart(2,'0')}-01`; const daysIn=new Date(Date.UTC(Y,M,0)).getUTCDate();
+  const today=todayStr(); const shifts=['am','pm'].filter(sh=>people.some(p=>p.shift===sh)); const SH_SHORT={am:'TM',pm:'TT'};
   const abbr=a=>{ const w=(a||'').trim().split(/\s+/).filter(Boolean); if(!w.length) return ''; return w.length===1 ? w[0].slice(0,3).toUpperCase() : w.map(x=>x[0]).join('').toUpperCase().slice(0,3); };
   const offOn=(pid,day)=>approved.find(it=>it.personId===pid && it.from<=day && day<=it.to);
   const lvl=(n,tot)=> n<=1 ? 'lvl-bad' : n*2<=tot ? 'lvl-warn' : 'lvl-ok';
-  // encabezado: meses + días
-  const months=[]; days.forEach(x=>{ const dt=pd(x.d); const k=dt.getUTCMonth()+'-'+dt.getUTCFullYear(); if(!months.length||months[months.length-1].k!==k) months.push({k,label:MESES_L[dt.getUTCMonth()]+' '+dt.getUTCFullYear(),n:0}); months[months.length-1].n++; });
-  let head='<thead><tr><th class="name grp"></th>'+months.map(m=>`<th class="grp mo" colspan="${m.n}">${m.label}</th>`).join('')+'</tr>';
-  head+='<tr><th class="name sub">Turno</th>'+days.map(x=>`<th class="sub dd${x.we?' we':''}${x.d===today?' today':''}"><span class="dw">${DOW[x.dow]}</span>${fmt(x.d)}</th>`).join('')+'</tr></thead>';
-  let body='<tbody>'; const minBy={}; const worst=[];
-  shifts.forEach(sh=>{
-    const list=people.filter(p=>p.shift===sh).sort((a,b)=>(a.area||'').localeCompare(b.area||'')||a.name.localeCompare(b.name));
-    const active=days.map(x=>list.filter(p=>!offOn(p.id,x.d)));
-    const off=days.map(x=>list.filter(p=>offOn(p.id,x.d)));
-    // fila de total
-    let tot=`<tr class="tot"><td class="name"><span class="chip ${sh}">${SHIFT[sh]}</span> <span class="muted small">activos /${list.length}</span></td>`;
-    days.forEach((x,i)=>{ const n=active[i].length; tot+=`<td class="n ${lvl(n,list.length)}${x.we?' we':''}">${n}</td>`; if(minBy[sh]===undefined||n<minBy[sh]) minBy[sh]=n; if(!x.we) worst.push({n,tot:list.length}); });
-    body+=tot+'</tr>';
-    // filas de personas activas (una por puesto)
-    for(let k=0;k<list.length;k++){
-      let r=`<tr class="slot"><td class="name"><span class="muted">${SH_SHORT[sh]}</span></td>`;
-      days.forEach((x,i)=>{ const p=active[i][k]; r+= p ? `<td class="who${x.we?' we':''}"><span class="nm">${esc(p.name.split(' ')[0])}</span><span class="ar">${esc(abbr(p.area))}</span></td>` : `<td class="who empty${x.we?' we':''}"></td>`; });
-      body+=r+'</tr>';
-    }
-    // fila de ausentes
-    let ab=`<tr class="off"><td class="name"><span class="muted small">de vacaciones</span></td>`;
-    days.forEach((x,i)=>{ ab+=`<td class="who${x.we?' we':''}">${off[i].map(p=>`<span class="nm">${esc(p.name.split(' ')[0])}</span>`).join('')}</td>`; });
-    body+=ab+'</tr>';
-  });
-  body+='</tbody>'; t.innerHTML=head+body;
-  const bad=worst.filter(w=>w.n<=1).length, warn=worst.filter(w=>w.n>1 && w.n*2<=w.tot).length;
+  const cols = weekdaysOnly ? [1,2,3,4,5] : [1,2,3,4,5,6,0]; const DOWL={1:'Lunes',2:'Martes',3:'Miércoles',4:'Jueves',5:'Viernes',6:'Sábado',0:'Domingo'};
+  let html=`<div class="cal-grid" style="grid-template-columns:repeat(${cols.length},minmax(0,1fr))">`+cols.map(c=>`<div class="cal-h">${DOWL[c]}</div>`).join('');
+  // celdas: arrancar en el lunes de la primera semana
+  const firstDow=pd(first).getUTCDay(); const lead=(firstDow+6)%7; // 0 = lunes
+  let cells=[]; for(let i=0;i<lead;i++) cells.push(null); for(let d=1; d<=daysIn; d++) cells.push(`${Y}-${String(M).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+  while(cells.length%7) cells.push(null);
+  const minBy={}; const worst=[];
+  for(let w=0; w<cells.length; w+=7){
+    const week=cells.slice(w,w+7); const keep=cols.map(c=>week[(c+6)%7]);
+    if(keep.every(x=>x===null)) continue;
+    keep.forEach(day=>{
+      if(!day){ html+='<div class="cal-d blank"></div>'; return; }
+      const dow=pd(day).getUTCDay(); const we=dow===0||dow===6; const inRange=day>=start&&day<=end;
+      let cell=`<div class="cal-d${we?' we':''}${day===today?' today':''}${inRange?'':' out'}"><div class="cal-num">${pd(day).getUTCDate()}</div>`;
+      shifts.forEach(sh=>{
+        const list=people.filter(p=>p.shift===sh).sort((a,b)=>(a.area||'').localeCompare(b.area||'')||a.name.localeCompare(b.name));
+        const act=list.filter(p=>!offOn(p.id,day)); const off=list.filter(p=>offOn(p.id,day));
+        if(inRange){ if(minBy[sh]===undefined||act.length<minBy[sh]) minBy[sh]=act.length; if(!we) worst.push({n:act.length,tot:list.length}); }
+        cell+=`<div class="cal-sh"><div class="cal-sh-h"><span class="chip ${sh}">${SH_SHORT[sh]}</span><span class="n ${lvl(act.length,list.length)}">${act.length}/${list.length}</span></div><ul>`+act.map(p=>`<li><span class="nm">${esc(p.name.split(' ')[0])}</span><span class="ar">${esc(abbr(p.area))}</span></li>`).join('')+(off.length?`<li class="offl" title="De vacaciones">${off.map(p=>esc(p.name.split(' ')[0])).join(', ')}</li>`:'')+`</ul></div>`;
+      });
+      html+=cell+'</div>';
+    });
+  }
+  html+='</div>'; cal.innerHTML=html;
+  const bad=worst.filter(x=>x.n<=1).length, warn=worst.filter(x=>x.n>1 && x.n*2<=x.tot).length;
   const totalOf=sh=>people.filter(p=>p.shift===sh).length;
-  tiles.innerHTML = shifts.map(sh=>`<div class="tile ${lvl(minBy[sh],totalOf(sh))==='lvl-bad'?'bad':lvl(minBy[sh],totalOf(sh))==='lvl-warn'?'warn':'ok'}"><div class="v num">${minBy[sh]}<span class="muted" style="font-size:15px;font-weight:500"> / ${totalOf(sh)}</span></div><div class="l">mínimo de activos · ${SHIFT[sh]}</div></div>`).join('') +
+  tiles.innerHTML = shifts.map(sh=>{ const v=minBy[sh]===undefined?totalOf(sh):minBy[sh]; const l=lvl(v,totalOf(sh)); return `<div class="tile ${l==='lvl-bad'?'bad':l==='lvl-warn'?'warn':'ok'}"><div class="v num">${v}<span class="muted" style="font-size:15px;font-weight:500"> / ${totalOf(sh)}</span></div><div class="l">mínimo de activos en el mes · ${SHIFT[sh]}</div></div>`; }).join('') +
     `<div class="tile ${bad?'bad':''}"><div class="v num">${bad}</div><div class="l">días hábiles × turno con 1 persona o nadie</div></div><div class="tile ${warn?'warn':''}"><div class="v num">${warn}</div><div class="l">días hábiles × turno con la mitad o menos</div></div>`;
-  $('#cov-sub').textContent = `${fmtL(start)} – ${fmtL(end)} · quiénes están trabajando cada día según las ${approved.length} opciones aprobadas en Asignación (incluye forzadas).`;
+  $('#cov-sub').textContent = `Quiénes trabajan cada día según las ${approved.length} opciones aprobadas en Asignación (incluye forzadas). En naranja, quiénes están de vacaciones.`;
 }
 function renderConfig(){
   const cfg=S.config||{}; const sig=JSON.stringify([cfg,S.team]);
@@ -769,6 +770,9 @@ $('#btn-logout').addEventListener('click', ()=>{ S.code=''; S.isAdmin=false; S.r
 $('#tabs').addEventListener('click', e=>{ const b=e.target.closest('[data-tab]'); if(!b) return; S.tab=b.dataset.tab; renderTabs(); if(S.tab==='calendario') renderCalendario(); });
 $('#cal-shift').addEventListener('change', renderCalendario);
 $('#cov-weekdays').addEventListener('change', renderCobertura);
+$('#cov-month').addEventListener('change', e=>{ S.covMonth=e.target.value; renderCobertura(); });
+$('#cov-prev').addEventListener('click', ()=>{ const o=$$('#cov-month option'); const i=o.findIndex(x=>x.value===S.covMonth); if(i>0){ S.covMonth=o[i-1].value; renderCobertura(); } });
+$('#cov-next').addEventListener('click', ()=>{ const o=$$('#cov-month option'); const i=o.findIndex(x=>x.value===S.covMonth); if(i<o.length-1){ S.covMonth=o[i+1].value; renderCobertura(); } });
 $('#flex').addEventListener('change', syncFlexUI);
 $('#opts').addEventListener('change', e=>{ const row=e.target.closest('.opt-row'); if(row && e.target.classList.contains('o-from') && !$('.o-to',row).value) $('.o-to',row).value=addDays(e.target.value,13); updateDaysHints(); });
 $('#who').addEventListener('change', ()=>{ S.myPerson=$('#who').value; store.set('vacx-who', S.myPerson); S.formFor=null; renderPedido(); if(!S.isAdmin) refresh(true); });
